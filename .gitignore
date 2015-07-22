@@ -1,0 +1,7 @@
+#TODO: Properly add dependencies using PIP whatever.txt
+#TODO: Remove some folders from .gitignore eventually
+/docs
+/nassDB
+/nassFormats
+NASS79.zip
+/sas7bdat-2.0.4

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>NHTSA NASS Search Tool</title>
+<script>
+"use strict";
+
+function isDef(o)
+{
+	return !(typeof o === "undefined" || o === null);
+}
+function isFunc(o)
+{
+	return typeof o === "function";
+}
+function isArray(o)
+{
+	return Object.prototype.toString.call(o) === "[object Array]";
+}
+
+(function(NASSSearch){
+	//Some sort of actual search
+	function SearchField(db, field, matchValue, matchType)
+	{
+		this.db = db;
+		this.field = field;
+		this.matchValue = matchValue;
+		this.matchType = matchType;
+	}
+	NASSSearch.SearchField = SearchField;
+	SearchField.prototype.toHTML = function()
+	{
+		return "<div class=\"uprLeft\">" + this.db + "</div>" + this.field + " == " + this.matchValue;
+	};
+	SearchField.MatchType = {}; //Implemented in the python script
+	
+	//An abstraction of the SearchField class, holds multiple SearchFields or Searchs (SearchField or multiple Searchs)
+	function Search(initialTerms, initialJoins)
+	{
+		if(isDef(initialTerms) && initialTerms.length > 1 && (!isDef(initialJoins) || !isArray(initialJoins) || !(initialTerms.length-1 == initialJoins.length)))
+			console.log("Search - Bad Init");
+		
+		this.invert = false;
+		this.terms = isDef(initialTerms) ? initialTerms : [];
+		this.joins = isDef(initialJoins) ? initialJoins : [];
+	}
+	NASSSearch.Search = Search;
+	Search.prototype.Add = function(term, join)
+	{
+		if(this.term.length == 0)
+		{
+			this.term = [term];
+		}
+		else
+		{
+			this.terms.push(term)
+			this.joins.push(join);
+		}
+	}
+	Search.prototype.toHTML = function(topLevel)
+	{
+		var htmlStr = (topLevel ? "" : "<div class=\"term" + (this.invert ? " not" : "") + (this.terms.length > 1 ? " multiple" : " single") + "\">");
+		htmlStr += (this.invert ? "<div class=\"uprLeft\">Not</div>" : "");
+		for(var i=0; i<this.terms.length; i++)
+		{
+			if(i > 0)
+				htmlStr += "<div class=\"term join\">" + this.joins[i-1] + "</div>";
+			htmlStr += this.terms[i].toHTML();
+		}
+		htmlStr += "<div class=\"over\"><div class=\"edit\">Edit</div><div class=\"del\">x</div><div class=\"add\">&raquo</div></div>";
+		htmlStr += (topLevel ? "" : "</div>");
+		return htmlStr;
+	};
+	Search.Join = {"and" : 0, "or" : 1};
+	
+})(window.NASSSearch = window.NASSSearch || {});
+
+//Do a test
+var search = new NASSSearch.Search([
+	new NASSSearch.Search([new NASSSearch.SearchField("DB_A", "Field_1", "Value1", "stringEquals")]),
+	new NASSSearch.Search([new NASSSearch.SearchField("DB_A", "Field_2", "Value2", "stringEquals")]),
+	new NASSSearch.Search([new NASSSearch.SearchField("DB_A", "Field_3", "Value3", "stringEquals")]),
+	new NASSSearch.Search([new NASSSearch.SearchField("DB_B", "Field_II", "Value4", "stringEquals")])],
+	[NASSSearch.Search.Join.and, NASSSearch.Search.Join.or, NASSSearch.Search.Join.and]);
+search.invert = true;
+var fullSearch = new NASSSearch.Search([
+	new NASSSearch.Search([new NASSSearch.SearchField("DB_B", "Field_I", "Value5", "stringEquals")]),
+	search,
+	new NASSSearch.Search([new NASSSearch.SearchField("DB_B", "Field_III", "Value6", "stringEquals")])],
+	[NASSSearch.Search.Join.and, NASSSearch.Search.Join.or]);
+var fullerSearch = new NASSSearch.Search([
+	new NASSSearch.Search([new NASSSearch.SearchField("DB_C", "A_Field", "aaa", "stringEquals")]),
+	fullSearch,
+	new NASSSearch.Search([new NASSSearch.SearchField("DB_C", "B_Field", "bbb", "stringEquals")]),
+	new NASSSearch.Search([new NASSSearch.SearchField("DB_C", "C_Field", "ccc", "stringEquals")]),
+	new NASSSearch.Search([new NASSSearch.SearchField("DB_C", "D_Field", "ddd", "stringEquals")])],
+	[NASSSearch.Search.Join.or, NASSSearch.Search.Join.or, NASSSearch.Search.Join.or, NASSSearch.Search.Join.or, NASSSearch.Search.Join.or]);
+
+window.addEventListener("load", function(){
+document.getElementById("searchVisual").innerHTML = fullerSearch.toHTML(true)});
+
+</script>
+<style type="text/css">
+body
+{
+	/*background-image:url("./bg.png"); My eyes!!!*/
+	background-repeat:repeat;
+	padding:0;
+	border:0;
+	margin:0;
+}
+div.searchContainer
+{
+	background-color: #DDDDDD;
+	margin:0 auto;
+	margin-top: 10px;
+	min-width:580px;
+	width:85%;
+	padding:10px;
+}
+div.searchVisual
+{
+
+}
+
+/* Search terms and their different types */
+div.searchVisual div.term
+{
+	position:relative;
+	display:inline-block;
+	
+	margin:4px;
+	padding:4px;
+	border:solid #000000 1px;
+	background-color: #EEEEEE;
+}
+div.searchVisual div.term.single
+{
+	padding-top:12px;
+}
+div.searchVisual div.term.multiple
+{
+	padding-top:8px;
+}
+div.searchVisual div.term.join
+{
+	border: 0;
+}
+div.searchVisual div.term.not
+{
+	background-color:#F2CCCC;
+}
+div.searchVisual div.term > div.uprLeft
+{
+	position:absolute;
+	left:0;
+	top:0;
+	font-size:10px;
+	font-weight:bold;
+	font-family:Arial, Sans-Serif;
+}
+/* The overlay control panel on each search term */
+div.searchVisual div.term > div.over
+{
+	position:absolute;
+	width:100%;
+	height:100%;
+	left:0;
+	top:0;
+	opacity:0.0;
+}
+div.searchVisual div.term > div.over:before
+{
+	content: '';
+	display: inline-block;
+	height: 100%;
+	vertical-align:middle;
+}
+div.searchVisual div.term > div.over:hover
+{
+	opacity:1.0;
+}
+div.searchVisual div.term > div.over > div.add,
+div.searchVisual div.term > div.over > div.del,
+div.searchVisual div.term > div.over > div.edit
+{
+	display:inline-block;
+	width:33.33%;
+	height:100%;
+	background-color:#FFFFFF;
+	text-align:center;
+	font-size:14px;
+	font-weight:bold;
+	font-family:Arial, Sans-Serif;
+}
+div.searchVisual div.term > div.over > div.del
+{
+	color:#FFFFFF;
+	background-color:#FF2244;
+}
+div.searchVisual div.term > div.over > div.edit
+{
+	color:#FFFFFF;
+	background-color:#4422FF;
+}
+
+div.searchParams
+{
+	
+}
+table td
+{
+	padding-left:10px;
+	padding-right:10px;
+}
+table tr:first-child
+{
+	background-color:#FFFFFF;
+}
+</style>
+</head>
+<body>
+<div class="searchContainer">
+	<div class="searchParams">
+		<span style="font-size:30px; font-family:Arial, sans-serif;">NHTSA NASS Search Tool</span><br>
+		Search parameters here
+		<br>
+		<div>
+		DB: <select>
+		<option></option>
+		<option></option>
+		</select>
+		Column: <select>
+		<option></option>
+		<option></option>
+		</select>
+		Not: <input type="checkbox">
+		Match Value: <input type="text">
+		Match Type: <select>
+		<option></option>
+		<option></option>
+		</select>
+		</div>
+		<div>
+		Logical Join: <select>
+		<option>And</option>
+		<option>Or</option>
+		</select>
+		</div>
+		<input type="button" value="Add Check">
+	</div>
+	<hr>
+	<div class="searchVisual" id="searchVisual">
+		
+	</div>
+	<hr>
+	<div>
+		<table border="0">
+		<tr>
+			<td>Case #</td>
+			<td>Link to Case</td>
+			<td>Matched filter</td>
+			<td>Excerpt</td>
+		</tr>
+		<tr>
+			<td>Case # 1</td>
+			<td><a href="#">Link to Case</a></td>
+			<td>DB_C| A_Field == aaa</td>
+			<td>&quote; some sentence where <span style="font-weight:bold">aaa</span> appears in the report &quote;</td>
+		</tr>
+		<tr>
+			<td>Case # 2</td>
+			<td><a href="#">Link to Case</a></td>
+			<td>DB_C| C_Field == ccc</td>
+			<td>&quote; in conclusion it was determined that <span style="font-weight:bold">ccc</span> was the cause &quote;</td>
+		</tr>
+	</div>
+</div>
+</body>
+</html>
