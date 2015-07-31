@@ -51,9 +51,11 @@ class NASSDB():
             self.dbtype = "VEH"
     
     #Gets a list of all the cases that match the search terms
-    def getCases(self, search=None):
+    def getCases(self, stubs=False, search=None):
         if search != None:
             print("Search is not implemented yet, will be ignored")
+        
+        stubKeys = ["CASEID", "PSU", "VEHNO", "OCCNO"]
             
         cases = {}
         with SAS7BDAT(self.data.filepath, skip_header=True) as db:
@@ -63,6 +65,9 @@ class NASSDB():
                 cases[rowCaseID] = {}
                 #For every column in this database, add a kv to the dictionary
                 for col in self.columns:
+                    #If we only want case stubs skipe everything else that's not in a case stub
+                    if stubKey and not col in stubKeys:
+                        continue
                     cases[rowCaseID][col.name] = row[col.col_id]
         
         return cases

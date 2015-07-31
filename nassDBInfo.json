@@ -53,6 +53,37 @@
 	{	"fileName" : "vi.sas7bdat",
 		"prettyName" : "Vehicle Interior",
 		"yearsFound" : ["2011"]
+	},
+	
+	
+	{	"fileName" : "airbag.sas7bdat",
+		"prettyName" : "Air Bag",
+		"yearsFound" : ["2011"]
+	},
+	
+	{	"fileName" : "bagseat.sas7bdat",
+		"prettyName" : "BAG SEAT",
+		"yearsFound" : ["2011"]
+	},
+	
+	{	"fileName" : "childseat.sas7bdat",
+		"prettyName" : "Child Seat",
+		"yearsFound" : ["2011"]
+	},
+	
+	{	"fileName" : "seatloc.sas7bdat",
+		"prettyName" : "Seat Location",
+		"yearsFound" : ["2011"]
+	},
+	
+	{	"fileName" : "tire.sas7bdat",
+		"prettyName" : "Tire",
+		"yearsFound" : ["2011"]
+	},
+	
+	{	"fileName" : "tiredmg.sas7bdat",
+		"prettyName" : "Tire Damage",
+		"yearsFound" : ["2011"]
 	}
 	]
 }

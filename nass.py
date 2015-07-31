@@ -1,4 +1,6 @@
 import json
+import os
+import re
 
 from nassDB import NASSDB, NASSDBData
 
@@ -24,40 +26,78 @@ from nassDB import NASSDB, NASSDBData
 '''
 
 if __name__ == "__main__":
-    print("NASS Search Tool (c) Peter Fornari 2015\nMilestone 1: Print all records, output as unstructured JSON\n")
+    print("NASS Search Tool (c) Peter Fornari 2015\nMilestone 2: Print all records for multiple years\n")
     
-    rootPath = "./nassDB/2011/"
+    rootPath = "./nassDB/"
     fDBInfo = open("nassDBInfo.json", "r")
     dbInfo = json.loads(fDBInfo.read())
     
-    casesFound = {}
-    for db in dbInfo["dbs"]:
-        print("Loading up " + db["prettyName"] + "...")
-        data = NASSDBData(rootPath + db["fileName"])
-        nassDB = NASSDB(data)
-        cases = nassDB.getCases()
-        for caseNum, case in cases.items():
-            if not caseNum in casesFound:
-                casesFound[caseNum] = case
-            else:
-                casesFound[caseNum].update(case)
+    uDataDirNames = ["ASCII", "Formatted Data", "Expanded SAS"]
     
-    
-    print("Outputting matches")
-    f = open("output.txt", "w")
-    for caseNum, case in casesFound.items():
-        s = "\n------CASEID: " + caseNum + "--------\n"
-        substr = ""
-        for k, v in case.items():
-            substr += "[" + str(k) + " = " + str(v) + "]     "
-            if len(substr) > 200:
-                s += substr + "\n"
-                substr = ""
-        s += substr
+    #For every year directory
+    for obj in os.listdir(rootPath):
+        if not os.path.isdir(rootPath + obj) or not re.match('\d{4}', obj, re.I):
+            continue
         
-        f.write(s)
+        #Resolve directories in this directory that contain data
+        year = obj
+        yearPath = rootPath + obj + "/"
+        dataPath = None
+        
+        for obj in os.listdir(yearPath):
+            if not os.path.isdir(yearPath + obj):
+                continue
+            
+            if obj in uDataDirNames:
+                dataPath = yearPath + obj + "/"
+                continue
+        
+        if not dataPath:
+            print("Could not resolve data path for " + year)
+            continue
+            
+        #Go through the data directory for databases
+        for obj in os.listdir(dataPath):
+            if not os.path.isfile(dataPath + obj):
+                continue
+            
+            #Only use known DBs
+            currDBInfo = None
+            for info in dbInfo["dbs"]:
+                if obj == info["fileName"]:
+                    currDBInfo = info["fileName"]
+                    break
+            else:
+                continue
+            
+            dbPath = dataPath + obj
+            print("Found " + currDBInfo["prettyName"] + " in " + dbPath)
+            
+            casesFound = {}
+            data = NASSDBData(dbPath)
+            nassDB = NASSDB(data)
+            cases = nassDB.getCases(stubs=True)
+            for caseNum, case in cases.items():
+                if not caseNum in casesFound:
+                    casesFound[caseNum] = case
+                else:
+                    casesFound[caseNum].update(case)
+                    
+        print("Outputting matches")
+        f = open("output.txt", "w")
+        for caseNum, case in casesFound.items():
+            s = "\n------CASEID: " + caseNum + "--------\n"
+            substr = ""
+            for k, v in case.items():
+                substr += "[" + str(k) + " = " + str(v) + "]     "
+                if len(substr) > 200:
+                    s += substr + "\n"
+                    substr = ""
+            s += substr
+            
+            f.write(s)
 
-    print("Success!")
+        print("Success!")
 
 
 
