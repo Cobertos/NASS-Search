@@ -4,7 +4,7 @@
 
 #NASS Search generated
 /nassDB
-output.txt
+output*.txt
 
 #Other files that don't need to be version controlled
 /docs

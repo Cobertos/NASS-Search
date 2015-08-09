@@ -9,6 +9,8 @@ class NASSDBData():
 
 class NASSDB():
     def __init__(self, data):
+        self.valid = True
+    
         self.data = data
         with SAS7BDAT(self.data.filepath) as db:
             self.columns = db.columns[:]
@@ -20,6 +22,10 @@ class NASSDB():
         self.colNameToIdx = {}
         for col in self.columns:
             self.colNameToIdx[col.name] = col.col_id
+            
+        if not "CASENO" in self.colNameToIdx:
+            self.valid = False
+            return
             
         #Determine if we need to do any special transformation on the database columns to get a full row for case
         self.dbType = "NORMAL"
@@ -55,20 +61,20 @@ class NASSDB():
         if search != None:
             print("Search is not implemented yet, will be ignored")
         
-        stubKeys = ["CASEID", "PSU", "VEHNO", "OCCNO"]
+        stubKeys = ["CASENO", "PSU", "VEHNO", "OCCNO"]
             
         cases = {}
         with SAS7BDAT(self.data.filepath, skip_header=True) as db:
             for row in db:
                 #Get the current case of this row
-                rowCaseID = row[self.colNameToIdx["CASEID"]]
-                cases[rowCaseID] = {}
+                rowCaseNO = row[self.colNameToIdx["CASENO"]]
+                cases[rowCaseNO] = {}
                 #For every column in this database, add a kv to the dictionary
                 for col in self.columns:
-                    #If we only want case stubs skipe everything else that's not in a case stub
-                    if stubKey and not col in stubKeys:
+                    #If we only want case stubs skip everything else that's not in a case stub
+                    if stubs and not col.name in stubKeys:
                         continue
-                    cases[rowCaseID][col.name] = row[col.col_id]
+                    cases[rowCaseNO][col.name] = row[col.col_id]
         
         return cases
     

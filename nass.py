@@ -10,83 +10,80 @@ from nassDB import NASSDB, NASSDBData
 
 #Search
 #Find relative database for search
-#Search those databases to find the caseids of all relevant data
-#Take those caseids and search all other databases for their information
+#Search those databases to find the casenos of all relevant data
+#Take those casenos and search all other databases for their information
 
-'''class SearchTerm():
-    def __init__(self, dbName, colName, searchValue, compareFunc):
-        self.dbName = dbName
-        self.colName = colName
-        self.searchValue = searchValue
-        self.compareFunc = compareFunc
+rootPath = "./nassDB/"
+
+dataDirNames = ["ASCII", "Formatted Data", "Expanded SAS"]
+
+fjsonDBInfo = open("nassDBInfo.json", "r")
+jsonDBInfo = json.loads(fjsonDBInfo.read())
+
+#Find all the important files within a year directory
+def findYearFiles(rootYearPath):
+    paths = {}
     
-    def compare(self, value):
-        return self.compareFunc(value, self.searchValue)
-
-'''
-
+    paths["formats"] = None #TODO: Implement
+    paths["dbs"] = [] #List of tuples with (filepath, dbInfo)
+    
+    #Currently only finds dataDir (DB) folders and adds the files that match up with databases in the database info file
+    for entry in os.listdir(rootYearPath):
+        if not os.path.isdir(rootYearPath + entry):
+            continue
+        
+        #Make sure its in the list of data dir folders we want to process
+        if not entry in dataDirNames:
+            continue
+        
+        #Check if the folder has any valid databases in it
+        dbPath = rootYearPath + entry + "/"
+        for entry in os.listdir(dbPath):
+            for info in jsonDBInfo["dbs"]:
+                if entry == info["fileName"]:
+                    paths["dbs"].append((dbPath + entry,info))
+                    break
+    
+    return paths
+    
 if __name__ == "__main__":
     print("NASS Search Tool (c) Peter Fornari 2015\nMilestone 2: Print all records for multiple years\n")
     
-    rootPath = "./nassDB/"
-    fDBInfo = open("nassDBInfo.json", "r")
-    dbInfo = json.loads(fDBInfo.read())
-    
-    uDataDirNames = ["ASCII", "Formatted Data", "Expanded SAS"]
-    
     #For every year directory
-    for obj in os.listdir(rootPath):
-        if not os.path.isdir(rootPath + obj) or not re.match('\d{4}', obj, re.I):
+    for entry in os.listdir(rootPath):
+        if not os.path.isdir(rootPath + entry) or not re.match('\d{4}', entry, re.I):
             continue
         
         #Resolve directories in this directory that contain data
-        year = obj
-        yearPath = rootPath + obj + "/"
-        dataPath = None
+        year = entry
+        files = findYearFiles(rootPath + entry + "/")
         
-        for obj in os.listdir(yearPath):
-            if not os.path.isdir(yearPath + obj):
-                continue
-            
-            if obj in uDataDirNames:
-                dataPath = yearPath + obj + "/"
-                continue
-        
-        if not dataPath:
-            print("Could not resolve data path for " + year)
+        if len(files["dbs"]) == 0:
+            print("Could not resolve any db files for " + year)
             continue
-            
-        #Go through the data directory for databases
-        for obj in os.listdir(dataPath):
-            if not os.path.isfile(dataPath + obj):
-                continue
-            
-            #Only use known DBs
-            currDBInfo = None
-            for info in dbInfo["dbs"]:
-                if obj == info["fileName"]:
-                    currDBInfo = info["fileName"]
-                    break
-            else:
-                continue
-            
-            dbPath = dataPath + obj
-            print("Found " + currDBInfo["prettyName"] + " in " + dbPath)
-            
-            casesFound = {}
-            data = NASSDBData(dbPath)
+        
+        casesFound = {}
+        for db in files["dbs"]:
+            data = NASSDBData(db[0])
             nassDB = NASSDB(data)
+            
+            if not nassDB.valid:
+                print("[_] " + year + "  \"" + db[1]["prettyName"] + "\" @ \"" + ((db[0][:35] + '..') if len(db[0]) > 35 else db[0]) + "\"")
+                continue
+                
+            print("[x] " + year + "  \"" + db[1]["prettyName"] + "\" @ \"" + ((db[0][:35] + '..') if len(db[0]) > 35 else db[0]) + "\"")
+            
             cases = nassDB.getCases(stubs=True)
             for caseNum, case in cases.items():
                 if not caseNum in casesFound:
                     casesFound[caseNum] = case
                 else:
                     casesFound[caseNum].update(case)
-                    
+        
         print("Outputting matches")
-        f = open("output.txt", "w")
+        f = open("output" + year + ".txt", "w")
         for caseNum, case in casesFound.items():
-            s = "\n------CASEID: " + caseNum + "--------\n"
+            s = "\n------CASENO: " + str(caseNum) + "--------\n"
             substr = ""
             for k, v in case.items():
                 substr += "[" + str(k) + " = " + str(v) + "]     "
@@ -98,48 +95,3 @@ if __name__ == "__main__":
             f.write(s)
 
         print("Success!")
-
-
-
-
-    '''print("Searching DBs")
-    def matchIt(src, test):
-        return test in src
-
-    searchTerms = [
-        SearchTerm("acc_desc", "TEXT71", "dog", matchIt),
-        SearchTerm("typ_acc", "TEXT66", "dog", matchIt),
-        SearchTerm("veh_pro", "TEXT81", "dog", matchIt),
-        SearchTerm("pers_pro", "TEXT91", "dog", matchIt)
-    ]
-
-    matches = []
-    for dbName, db in dbs.items():
-        sts = []
-        for st in searchTerms:
-            if st.dbName == dbName:
-                sts.append(st)
-        
-        if not sts:
-            continue
-        
-        print("Searching: " + dbName)    
-        matches += db.search(sts)
-
-    print("Getting relevant records")
-    rows = {}
-    for dbName, db in dbs.items():
-        print("Searching: " + dbName)
-        kvs = db.getCaseIDs(matches)
-        for kv in kvs:
-            caseID = kv["CASEID"]
-            if not caseID in rows:
-                rows[caseID] = kv
-            else:
-                for kNew, vNew in kv.items():
-                    if kNew in rows[caseID]:
-                        if vNew and rows[caseID][kNew]:
-                            rows[caseID][kNew] += vNew
-                    else:
-                        rows[caseID][kNew] = vNew
-                #rows[caseID].update(kv)'''
