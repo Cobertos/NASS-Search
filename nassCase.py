@@ -3,29 +3,37 @@ from enum import Enum
 
 #Defines a case from NASS
 
-class NassCaseDataType(Enum):
+class NASSCaseDataType(Enum):
     accident = 0
     vehicle = 1
     occupant = 2
 
-class NassCase():
+class NASSCase():
     def __init__(self):
+        self.dbs = {}
         self.kvs = {}
         self.vehicles = {}
         self.occupants = {}
+        self.isStub = False
     
-    def feedData(self, kvs, type):
-        if type == NassCaseDataType.accident:
+    def feedData(self, dbFrom, kvs):
+        if dbFrom in self.dbs:
+            self.dbs[dbFrom].update(kvs)
+        else:
+            self.dbs[dbFrom] = kvs
+    
+    
+        '''if type == NASSCaseDataType.accident:
             self.kvs.update(kvs)
             return
-        if type == NassCaseDataType.vehicle and "VEHNO" in kvs:
+        if type == NASSCaseDataType.vehicle and "VEHNO" in kvs:
             vehno = kvs["VEHNO"]
             if vehno in self.vehicles:
                 self.vehicles[vehno].update(kvs)
             else:
                 self.vehicles[vehno] = kvs
             return
-        if type == NassCaseDataType.occupant and "OCCNO" in kvs:
+        if type == NASSCaseDataType.occupant and "OCCNO" in kvs:
             occno = kvs["OCCNO"]
             if occno in self.vehicles:
                 self.occupants[occno].update(kvs)
@@ -33,4 +41,4 @@ class NassCase():
                 self.occupants[occno] = kvs
             return
             
-        print("Data could not be added to case")
+        print("Data could not be added to case")'''

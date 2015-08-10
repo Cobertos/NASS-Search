@@ -5,7 +5,7 @@
 #NASS Search generated
 /nassDB
 output*.txt
+dynamicDBInfo.json
 
 #Other files that don't need to be version controlled
 /docs
-NASS79.zip

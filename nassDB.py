@@ -2,17 +2,15 @@ import re
 
 from sas7bdat import SAS7BDAT
 
-
-class NASSDBData():
-    def __init__(self, filepath):
-        self.filepath = filepath
+from nassGlobal import prefs
+from nassCase import NASSCase
 
 class NASSDB():
     def __init__(self, data):
         self.valid = True
     
         self.data = data
-        with SAS7BDAT(self.data.filepath) as db:
+        with SAS7BDAT(self.data["filePath"]) as db:
             self.columns = db.columns[:]
             #Decode some of the information
             for col in self.columns:
@@ -26,65 +24,68 @@ class NASSDB():
         if not "CASENO" in self.colNameToIdx:
             self.valid = False
             return
-            
-        #Determine if we need to do any special transformation on the database columns to get a full row for case
-        self.dbType = "NORMAL"
-        self.longTextName = ""
         
+        '''#Special db properties
+        #Long line support
+        self.dbLongLine = None
         hasLINENO = False
         hasTEXTxx = False
-        hasVEHNO = False
-        hasOCCNO = False
         for col in self.columns:
             if col.name == "LINENO":
                 hasLINENO = True
             elif re.match("^TEXT\d+$", col.name):
                 hasTEXTxx = True
-                self.longTextName = col.name
-            elif col.name == "VEHNO":
+                self.dbLongLine = col.name
+        
+        if not (hasLINENO and hasTEXTxx):
+            self.dbLongLine = None'''
+        
+        
+        
+        '''hasVEHNO = False
+        hasOCCNO = False
+        for col in self.columns:
+            if col.name == "VEHNO":
                 hasVEHNO = True
             elif col.name == "OCCNO":
                 hasOCCNO = True
                 
-        #Database contains a field that continues over multiple rows (a long string)        
-        if hasLINENO and hasTEXTxx:
-            self.dbType = "LTEXT"
         #Database describes an occupant and must be linked as such
         elif hasVEHNO and hasOCCNO:
             self.dbType = "OCC"
         #Database describes a vehicle and must be linked as such
         elif hasVEHNO:
-            self.dbtype = "VEH"
+            self.dbtype = "VEH"'''
     
     #Gets a list of all the cases that match the search terms
+    #Stubs - Should we return all the data we store in this database or just stubs of cases
+    #Search - Search is a list of multiple terms that we test each row against for later final resolving of the cases and joins
     def getCases(self, stubs=False, search=None):
-        if search != None:
-            print("Search is not implemented yet, will be ignored")
-        
-        stubKeys = ["CASENO", "PSU", "VEHNO", "OCCNO"]
-            
-        cases = {}
-        with SAS7BDAT(self.data.filepath, skip_header=True) as db:
+        if search:
+            cases = {}
+            for term in search:
+                cases[term] = []
+        else:
+            cases = []
+        with SAS7BDAT(self.data["filePath"], skip_header=True) as db:
             for row in db:
-                #Get the current case of this row
-                rowCaseNO = row[self.colNameToIdx["CASENO"]]
-                cases[rowCaseNO] = {}
-                #For every column in this database, add a kv to the dictionary
+                #Take this row and make it a bunch of kvs
+                #Also make the final case while we're at it
+                kvs = {}
+                case = NASSCase()
                 for col in self.columns:
+                    kvs[col.name] = row[col.col_id]
+                    
                     #If we only want case stubs skip everything else that's not in a case stub
-                    if stubs and not col.name in stubKeys:
-                        continue
-                    cases[rowCaseNO][col.name] = row[col.col_id]
+                    if stubs and col.name in prefs["stubKeys"] or not stubs:
+                        case.feedData(self.data["fileName"], {col.name:row[col.col_id]})
+            
+                #If we're searching, make sure this row matches
+                if search:
+                    for term in search:
+                        if search.compare(kvs):
+                            cases[term].append(case)
+                else:
+                    cases.append(case)
         
         return cases
-    
-    #Searches the specific columns matches a specific value using a compare function all from searchTerms    
-    '''def search(self, searchTerms):
-        matches = []
-        with SAS7BDAT(self.filepath, skip_header=True) as db:
-            for row in db:
-                for st in searchTerms:
-                    idx = self.colNameToIdx[st.colName]
-                    if st.compare(row[idx]):
-                        matches.append(row[self.colNameToIdx["CASEID"]])
-        return matches'''

@@ -1,0 +1,72 @@
+{
+	"dbs" : {
+	"accident.sas7bdat" : {
+		"prettyName" : "Accident Info"
+	},
+	
+	"acc_desc.sas7bdat" : {
+		"prettyName" : "Accident Description"
+	},
+	
+	"event.sas7bdat" : {
+		"prettyName" : "Event Info"
+	},
+	
+	"gv.sas7bdat" : {
+		"prettyName" : "Vehicle Info"
+	},
+	
+	"oa.sas7bdat" : {
+		"prettyName" : "Occupant Info"
+	},
+	
+	"oi.sas7bdat" : {
+		"prettyName" : "Occupant Injury"
+	},
+	
+	"pers_pro.sas7bdat" : {
+		"prettyName" : "PERS PRO"
+	},
+	
+	"typ_acc.sas7bdat" : {
+		"prettyName" : "TYP ACC"
+	},
+	
+	"ve.sas7bdat" : {
+		"prettyName" : "Vehicle Exterior"
+	},
+	
+	"veh_pro.sas7bdat" : {
+		"prettyName" : "VEH PRO"
+	},
+	
+	"vi.sas7bdat" : {
+		"prettyName" : "Vehicle Interior"
+	},
+	
+	
+	"airbag.sas7bdat" : {
+		"prettyName" : "Air Bag"
+	},
+	
+	"bagseat.sas7bdat" : {
+		"prettyName" : "BAG SEAT"
+	},
+	
+	"childseat.sas7bdat" : {
+		"prettyName" : "Child Seat"
+	},
+	
+	"seatloc.sas7bdat" : {
+		"prettyName" : "Seat Location"
+	},
+	
+	"tire.sas7bdat" : {
+		"prettyName" : "Tire"
+	},
+	
+	"tiredmg.sas7bdat" : {
+		"prettyName" : "Tire Damage"
+	}
+	}
+}
