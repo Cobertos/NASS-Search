@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 
+import nassGlobal
 from nassGlobal import prefs, data
 from nassDB import NASSDB
 
@@ -31,24 +32,44 @@ def findYearFiles(year, rootYearPath):
         
         print("Found directory: " + dbPath)
         
-        #Check if the folder has any valid databases in it
-        for entry in os.listdir(dbPath):
-            dbFilePath = os.path.join(dbPath, entry)
-            if not os.path.isfile(dbFilePath):
-                continue
-                
-            #Check and make sure it's a sas7bdat file
+        def getExt(entry):
             dotPos = entry.find(".")
             if dotPos == -1:
+                return None
+            return entry[dotPos+1:]
+        
+        #First check for a WinZip Self-Extracting Archive
+        for entry in os.listdir(dbPath):
+            entryFilePath = os.path.join(dbPath, entry)
+            if not os.path.isfile(entryFilePath):
                 continue
-            extension = entry[dotPos+1:]
-            #WinZip Self-Extracting Archives
-            if extension == "exe":
-                #TODO: Do the extraction
-                #Alert the user they're running an exe named whatever
-                #subprocess.call([entry, "/auto", "."])
+            
+            extension = getExt(entry)
+            if extension != "exe":
                 continue
-            if not extension == "sas7bdat":
+                
+            #There's no good test to see if it's a WinZip self-extracting archive
+            #TODO: Wait for email from WinZip to see if there is
+            print("Found possible WinZip self-extracting archive \"" + entry + "\".")
+            print("Executables are not automatically run for safety. Only run if you trust your source of NASS data.")
+            yn = nassGlobal.userYN("Would you like to run this file? [y or n]: ")
+            if yn:
+                subprocess.call([entryFilePath, "/auto", "."])
+                print("Extracted.")
+                os.remove(entryFilePath)
+                print("Deleted.")
+            else:
+                print("Skipped.")
+            continue
+        
+        #Now check if the folder has any valid databases in it
+        for entry in os.listdir(dbPath):
+            entryFilePath = os.path.join(dbPath, entry)
+            if not os.path.isfile(entryFilePath):
+                continue
+            
+            extension = getExt(entry)
+            if extension != "sas7bdat":
                 continue
                 
             #Check and make sure it's a file we have defined as a db
@@ -57,7 +78,7 @@ def findYearFiles(year, rootYearPath):
                 
             #TODO: This is a little wonky because NASSDB expects a data object right now
             #   Make it accept just a fp or something?
-            dbInfo = {"filePath" : dbFilePath, "fileName" : entry}
+            dbInfo = {"filePath" : entryFilePath, "fileName" : entry}
             db = NASSDB(dbInfo)
             if not db.valid: #Make sure it's valid
                 continue
@@ -66,9 +87,9 @@ def findYearFiles(year, rootYearPath):
             paths["dbs"][entry]= {
                 "year" : year,
                 "fileName" : entry,
-                "filePath" : dbFilePath,
+                "filePath" : entryFilePath,
                 "columnNames" : columns}
-            print("Found file: " + dbFilePath)
+            print("Found file: " + entryFilePath)
                     
     return paths
     

@@ -1,6 +1,7 @@
 import os.path
 import json
 
+#Common variables and data
 prefs = {}
 #Root folder to search
 prefs["rootPath"] = os.path.normpath("./nassDB")
@@ -17,3 +18,14 @@ data = {}
 
 fstaticDBInfo = open("staticDBInfo.json", "r")
 data["staticDBInfo"] = json.loads(fstaticDBInfo.read())
+
+#Common functionality
+def userYN(msg):
+    while True:
+        userIn = input(msg)
+        if userIn.lower() == "y":
+            return True
+        elif userIn.lower() == "n":
+            return False
+        
+        print("Invalid response, please choose y or n")
