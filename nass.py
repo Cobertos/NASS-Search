@@ -2,7 +2,7 @@ import json
 
 from nassGlobal import prefs, data
 from nassDB import NASSDB
-from nassSearchTerm import NASSSearchTerm
+from nassSearchTerm import NASSSearchTerm, NASSSearch
 from nassCase import NASSCase
 
 #Go into each file and get column info on each db
@@ -14,43 +14,42 @@ from nassCase import NASSCase
 #Search those databases to find the casenos of all relevant data
 #Take those casenos and search all other databases for their information
 
-search = NASSSearch(NASSSearchTerm.fromStrList([
-("acc_desc.sas7bdat","CASENO","value"), "AND" ("thisOne")
-]))
+def areEq(foundValue,findValue):
+    return foundValue == findValue
+
+search = NASSSearch(NASSSearchTerm.fromStrList(
+("acc_desc.sas7bdat","CASENO",1, areEq)
+))
 
 fpreprocessDBInfo = open("./preprocessDBInfo.json","r")
-data["preprocessDBInfo"] = json.loads(fpreprofessDBInfo.read())
+data["preprocessDBInfo"] = json.loads(fpreprocessDBInfo.read())
 
 
 if __name__ == "__main__":
-    print("NASS Search Tool (c) Peter Fornari 2015\nMilestone 2: Print all records for multiple years\n")
+    print("NASS Search Tool (c) Peter Fornari 2015\nMilestone 3: Prints all records matching a given search\n")
     
-    matchingCases = {}
-    for year, yearInfo in data["preprocessDBInfo"]["years"].items():
-        
-        yearMatchingCases = None
-        for dbInfo in yearInfo:
-            relevantTerms = term.ofDB(dbInfo["fileName"])
+    #Go through each year and each DB in that year
+    for year, yearInfo in data["preprocessDBInfo"].items():
+        for dbName, dbInfo in yearInfo["dbs"].items():
+            #Relevant to search?
+            relevantTerms = search.ofDB(dbName)
             if len(relevantTerms) == 0:
                 continue #Not a relevant database
             
+            #Open the database and get cases
             nassDB = NASSDB(dbInfo)
-
-            staticDBInfo = data["staticDBInfo"][dbInfo["fileName"]]
+            staticDBInfo = data["staticDBInfo"]["dbs"][dbName]
+            
+            printStr = year + "  \"" + staticDBInfo["prettyName"] + "\" @ \"" + ((dbInfo["filePath"][:35] + '..') if len(dbInfo["filePath"]) > 35 else dbInfo["filePath"]) + "\""
             if not nassDB.valid:
-                print("[_] " + year + "  \"" + staticDBInfo["prettyName"] + "\" @ \"" + ((dbInfo["filePath"][:35] + '..') if len(dbInfo["filePath"]) > 35 else dbInfo["filePath"]) + "\"")
-                continue
-                
-            print("[x] " + year + "  \"" + staticDBInfo["prettyName"] + "\" @ \"" + ((dbInfo["filePath"][:35] + '..') if len(dbInfo["filePath"]) > 35 else dbInfo["filePath"]) + "\"")
+                print("[_] " + printStr)
+                continue    
+            print("[x] " + printStr)
     
             cases = nassDB.getCases(stubs=True,search=relevantTerms)
-            if yearMatchingCases == None:
-                yearMatchingCases = cases
-            else:
-                yearMatchingCases.extend(cases)
-        
-        matchingCases[year] = yearMatchingCases
+            search.fromDB(cases)
     
+    search.finalize()
     
     '''print("Outputting matches")
     f = open("output.txt", "w")

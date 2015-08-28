@@ -9,12 +9,19 @@ class NASSCaseDataType(Enum):
     occupant = 2
 
 class NASSCase():
-    def __init__(self):
+    def __init__(self, year):
+        self.year = None
         self.dbs = {}
         self.kvs = {}
         self.vehicles = {}
         self.occupants = {}
         self.isStub = False
+    
+    def __eq__(self, other):
+        return self.dbs == other.dbs and self.year == other.year
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
     
     def feedData(self, dbFrom, kvs):
         if dbFrom in self.dbs:

@@ -72,18 +72,18 @@ class NASSDB():
                 #Take this row and make it a bunch of kvs
                 #Also make the final case while we're at it
                 kvs = {}
-                case = NASSCase()
+                case = NASSCase(self.data["year"])
                 for col in self.columns:
                     kvs[col.name] = row[col.col_id]
                     
                     #If we only want case stubs skip everything else that's not in a case stub
-                    if stubs and col.name in prefs["stubKeys"] or not stubs:
+                    if (not stubs) or col.name in prefs["stubKeys"]:
                         case.feedData(self.data["fileName"], {col.name:row[col.col_id]})
             
                 #If we're searching, make sure this row matches
                 if search:
                     for term in search:
-                        if search.compare(kvs):
+                        if term.compare(kvs):
                             cases[term].append(case)
                 else:
                     cases.append(case)

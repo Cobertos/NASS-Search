@@ -1,8 +1,15 @@
+import os.path
+import json
+
 prefs = {}
 #Root folder to search
-prefs["rootPath"] = "./nassDB"
+prefs["rootPath"] = os.path.normpath("./nassDB")
 #Directories that we're looking for in the nassDB folder
-prefs["dataDirNames"] = ["ASCII", "Formatted Data", "Expanded SAS"]
+prefs["dataDirNames"] = [
+"ASCII",
+"Unformatted Data",
+"Expanded SAS",
+os.path.normpath("Expanded SAS/UNFORMATTED")]
 #Keys kept for stub cases
 prefs["stubKeys"] = ["CASENO", "PSU", "VEHNO", "OCCNO"]
 
