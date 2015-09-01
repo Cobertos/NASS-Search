@@ -22,23 +22,14 @@ search = NASSSearch(NASSSearchTerm.fromStrList(
 
 
 if __name__ == "__main__":
-    print("NASS Search Tool (c) Peter Fornari 2015\nMilestone 3: Prints all records matching a given search\n")
+    print("NASS Search Tool (c) Peter Fornari 2015\nMilestone 4: Searching and exporting to links format\n")
     
     search.perform()
-    cases = search.export("cases")
+    cases = search.export("links")
     
     print("Outputting matches")
     f = open("output.txt", "w")
-    for case in cases:
-        s = "\n------------------------\n"
-        substr = ""
-        for db, kvs in case.dbs.items():
-            substr += "[" + str(db) + "| " + str(kvs) + "]     "
-            if len(substr) > 200:
-                s += substr + "\n"
-                substr = ""
-        s += substr
-        
-        f.write(s)
+    for case, link in cases:
+        f.write("\n------------------------\n" + case.prettyPrint(fixedLen=200) + "\n" + link)
 
     print("Success!")

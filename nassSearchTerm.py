@@ -1,5 +1,6 @@
 from enum import Enum
 
+from sas7bdatWrapper import SAS7BDATUtil
 from nassGlobal import prefs, data
 from nassDB import NASSDB
 
@@ -240,13 +241,13 @@ class NASSSearchTerm():
 class NASSSearch():
     def __init__(self, term):
         self.search = term
-        self.searchData = {} #Dictionary of terms to sets of cases
-        self.finalCases = None
+        self.foundCases = set()
     
     #Perform the search
     def perform(self):
         #Go through each year and each DB in that year
         for year, yearInfo in data["preprocessDBInfo"].items():
+            termsToCases = {}
             for dbName, dbInfo in yearInfo["dbs"].items():
                 #Relevant to search?
                 relevantTerms = self.search.ofDB(dbName)
@@ -261,16 +262,16 @@ class NASSSearch():
                 print(printStr)
         
                 cases = nassDB.getCases(stubs=True,search=relevantTerms)
-                self.searchData.update(cases)
+                termsToCases.update(cases)
         
-        self.finalCases = self.resolve()
+            self.foundCases = self.foundCases.union(self.resolve(termsToCases))
     
-    #Take the collected searchData (terms from self.search mapped to datasets) and
+    #Take the collected termsToCases (terms from self.search mapped to datasets) and
     #compute the final dataset
-    def resolve(self):        
+    def resolve(self, termsToCases):        
         #Func for mapping of NASSSearchTerms to some other value
         def mapFunc(term):
-            if not term in self.searchData:
+            if not term in termsToCases:
                 if isinstance(term.terms, dict):
                     #Woah, that's not good, we found a singular term that didn't match.
                     #It has no more children so it's not like it was a non-distinct term.
@@ -281,7 +282,7 @@ class NASSSearch():
                     return term.resolve(mapFunc, joinFunc)
             else:
                 #The actual resolution
-                return self.searchData[term]
+                return termsToCases[term]
         
         #Func for joining mapped values based on a join
         def joinFunc(firstTerm, join, secondTerm):
@@ -294,36 +295,35 @@ class NASSSearch():
     
     def export(self, how):
         if how == "cases":
-            return self.finalCases
+            return self.foundCases
         elif how == "fullCases":
             #Go back through all dbs and get everything
             raise NotImplementedError("Not implemented yet")
         elif how == "links":
             #First take all the cases and sort them by year
             casesByYear = {}
-            for case in self.finalCases:
+            for case in self.foundCases:
                 if case.year in casesByYear:
-                    casesByYear.append(case)
+                    casesByYear[case.year].append(case)
                 else:
-                    casesByYear = [case]
+                    casesByYear[case.year] = [case]
         
             #Go through each year and compare the cases to get the link
             casesToLink = []
             for year in casesByYear.keys():
-                linksDB = SAS7BDAT(data["preprocessDBInfo"][year]["linksDB"])
-                columns = None
-                for row in linksDB:
-                    if not columns:
-                        columns = tuple(row)
-                        continue
-                    
-                    #Compare the row to the case
-                    for case in casesByYear[year]:
-                        if case.compare(row):
-                            url = "http://www-nass.nhtsa.dot.gov/nass/cds/CaseForm.aspx?xsl=main.xsl&CaseID=" + row[2]
-                            casesToLink.append((case,url))
-                            casesByYear[year].remove(case)
-                            continue
+                with SAS7BDATUtil(data["preprocessDBInfo"][year]["linksDB"]) as linksDB:
+                    for row in linksDB:
+                        #Compare the row to the cases of that year
+                        for case in casesByYear[year]:
+                            if case.compare(linksDB.rowToKVs(row)):
+                                print("FOUND")
+                                which = "CASEID" if "CASEID" in linksDB.column_names_decoded else "SCASEID"
+                                #caseid = '{:0f}'.format()
+                                caseid = str(row[linksDB.colToIdx(which)]).rstrip("0").rstrip(".")
+                                url = "http://www-nass.nhtsa.dot.gov/nass/cds/CaseForm.aspx?xsl=main.xsl&CaseID=" + caseid
+                                casesToLink.append((case,url))
+                                casesByYear[year].remove(case)
+                                continue
                             
             return casesToLink #Returns a list of tuples
                     
