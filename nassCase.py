@@ -12,9 +12,6 @@ class NASSCase():
     def __init__(self, year):
         self.year = None
         self.dbs = {}
-        self.kvs = {}
-        self.vehicles = {}
-        self.occupants = {}
         self.isStub = False
     
     def __eq__(self, other):

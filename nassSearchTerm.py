@@ -1,5 +1,8 @@
 from enum import Enum
 
+from nassGlobal import prefs, data
+from nassDB import NASSDB
+
 #Each term is a dictionary with dbName, colName, searchValue, compareFunc
 
 class NASSSearchJoin(Enum):
@@ -238,16 +241,33 @@ class NASSSearch():
     def __init__(self, term):
         self.search = term
         self.searchData = {} #Dictionary of terms to sets of cases
+        self.finalCases = None
     
-    def ofDB(self, dbName):
-        return self.search.ofDB(dbName)
-    
-    def fromDB(self, data):
-        self.searchData.update(data)
+    #Perform the search
+    def perform(self):
+        #Go through each year and each DB in that year
+        for year, yearInfo in data["preprocessDBInfo"].items():
+            for dbName, dbInfo in yearInfo["dbs"].items():
+                #Relevant to search?
+                relevantTerms = self.search.ofDB(dbName)
+                if len(relevantTerms) == 0:
+                    continue #Not a relevant database
+                
+                #Open the database and get cases
+                nassDB = NASSDB(dbInfo)
+                staticDBInfo = data["staticDBInfo"]["dbs"][dbName]
+                
+                printStr = year + "  \"" + staticDBInfo["prettyName"] + "\" @ \"" + ((dbInfo["filePath"][:35] + '..') if len(dbInfo["filePath"]) > 35 else dbInfo["filePath"]) + "\""   
+                print(printStr)
+        
+                cases = nassDB.getCases(stubs=True,search=relevantTerms)
+                self.searchData.update(cases)
+        
+        self.finalCases = self.resolve()
     
     #Take the collected searchData (terms from self.search mapped to datasets) and
     #compute the final dataset
-    def finalize(self):        
+    def resolve(self):        
         #Func for mapping of NASSSearchTerms to some other value
         def mapFunc(term):
             if not term in self.searchData:
@@ -255,7 +275,7 @@ class NASSSearch():
                     #Woah, that's not good, we found a singular term that didn't match.
                     #It has no more children so it's not like it was a non-distinct term.
                     #We must be missing some data in the search.
-                    raise RuntimeError("Term with no matching data in NASSSearch. Missed a DB query?")
+                    raise RuntimeError("Term with no matching data in NASSSearch. Missed a DB query?\nOffending term:" + str(term))
                 else:
                     #A term that wasn't found just may be non-distinct
                     return term.resolve(mapFunc, joinFunc)
@@ -272,4 +292,51 @@ class NASSSearch():
                 
         return self.search.resolve(mapFunc, joinFunc)
     
+    def export(self, how):
+        if how == "cases":
+            return self.finalCases
+        elif how == "fullCases":
+            #Go back through all dbs and get everything
+            raise NotImplementedError("Not implemented yet")
+        elif how == "links":
+            #First take all the cases and sort them by year
+            casesByYear = {}
+            for case in self.finalCases:
+                if case.year in casesByYear:
+                    casesByYear.append(case)
+                else:
+                    casesByYear = [case]
         
+            #Go through each year and compare the cases to get the link
+            casesToLink = []
+            for year in casesByYear.keys():
+                linksDB = SAS7BDAT(data["preprocessDBInfo"][year]["linksDB"])
+                columns = None
+                for row in linksDB:
+                    if not columns:
+                        columns = tuple(row)
+                        continue
+                    
+                    #Compare the row to the case
+                    for case in casesByYear[year]:
+                        if case.compare(row):
+                            url = "http://www-nass.nhtsa.dot.gov/nass/cds/CaseForm.aspx?xsl=main.xsl&CaseID=" + row[2]
+                            casesToLink.append((case,url))
+                            casesByYear[year].remove(case)
+                            continue
+                            
+            return casesToLink #Returns a list of tuples
+                    
+            #Get the id
+            #Create the links and output the cases
+            raise NotImplementedError("Not implemented yet")
+        elif how == "json":
+            fullCases = self.export("fullCases")
+            #Go through each case and output to json
+            #Combine all the strings and return string
+            raise NotImplementedError("Not implemented yet")
+        elif how == "xls":
+            fullCases = self.export("fullCases")
+            #Go through each case and output to xls
+            #Combine all strings into file
+            raise NotImplementedError("Not implemented yet")

@@ -22,15 +22,27 @@ def findYearFiles(year, rootYearPath):
     paths = {}
     
     paths["formats"] = None #TODO: Implement, eventually a list of (filepaths)
+    paths["linksDB"] = None #The database that contains the relations between cases and the link ID for the NASS case viewer
     paths["dbs"] = {} #List of dictionaries with {filename, filepath, columnList} keys
     
+    #Links DBs
+    #The db to get the links is in the base of the directory and the same name as the year path
+    linksDB = "case" + year + ".sas7bdat"
+    linksDBPath = os.path.join(rootYearPath, linksDB)
+    if os.path.isfile(linksDBPath):
+        paths["linksDB"] = linksDBPath
+        print("Found links DB: " + linksDB)
+    else:
+        print("## Could not find links database")
+    
+    #DBs
     #Currently only finds dataDir (DB) folders and adds the files that match up with databases in the database info file
     for entry in prefs["dataDirNames"]: #Only search for these folders
         dbPath = os.path.join(rootYearPath, entry)
         if not os.path.isdir(dbPath):
             continue
         
-        print("Found directory: " + dbPath)
+        print("Found DB directory: " + dbPath)
         
         def getExt(entry):
             dotPos = entry.find(".")
@@ -89,7 +101,7 @@ def findYearFiles(year, rootYearPath):
                 "fileName" : entry,
                 "filePath" : entryFilePath,
                 "columnNames" : columns}
-            print("Found file: " + entryFilePath)
+            print("Found DB: " + entryFilePath)
                     
     return paths
     

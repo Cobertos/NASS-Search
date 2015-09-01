@@ -1,5 +1,3 @@
 * Make the tests a bit more robust
 * Add the line joining in nassDB
-* Add the actual searching functionality into NASSSearch? or another class similar to it
-* nass.py should have relatively nothing in it
-* add the preprocess .exe runner with user 
+* Add options to both nass and nassPreprocess eventually

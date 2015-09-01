@@ -19,6 +19,12 @@ data = {}
 fstaticDBInfo = open("staticDBInfo.json", "r")
 data["staticDBInfo"] = json.loads(fstaticDBInfo.read())
 
+if not os.path.isfile("./preprocessDBInfo.json"):
+    print("No preprocessDBInfo found! Run the preprocessor first!")
+else:
+    fpreprocessDBInfo = open("./preprocessDBInfo.json","r")
+    data["preprocessDBInfo"] = json.loads(fpreprocessDBInfo.read())
+
 #Common functionality
 def userYN(msg):
     while True:
