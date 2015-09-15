@@ -1,0 +1,94 @@
+body
+{
+	/*background-image:url("./bg.png"); My eyes!!! */
+	background-repeat:repeat;
+	padding:0;
+	border:0;
+	margin:0;
+}
+
+
+/*The visual search box*/
+#searchContainer
+{
+	margin:0;
+	margin-left:auto;
+	margin-right:auto;
+	max-width:1200px;
+	min-width:600px;
+}
+#searchControl
+{
+	display:inline-block;
+	width:500px;
+	min-height:50px;
+	background-color: #D0D0D0;
+}
+#searchVisual
+{
+	display:inline-block;
+	float:right;
+}
+
+#searchVisual div.term
+{
+	position:relative;
+	display:inline-block;
+	
+	margin:4px;
+	padding:4px;
+	border:solid #000000 1px;
+	background-color: #D0D0D0;
+	cursor: pointer;
+}
+#searchVisual div.term.hover
+{
+	background-color: #F5F5F5;
+}
+#searchVisual div.term.dbTerm
+{
+	padding-top:12px;
+}
+#searchVisual div.term.listTerm
+{
+	padding-top:8px;
+}
+#searchVisual div.term.join
+{
+	border: 0;
+}
+#searchVisual div.term.not
+{
+	background-color:#F2CCCC;
+}
+#searchVisual div.term.not.hover
+{
+	background-color:#F6D0D0;
+}
+#searchVisual div.term.focus, #searchVisual div.term.focus.not, #searchVisual div.term.focus.not.hover
+{
+	background-color:#EEEED0;
+}
+#searchVisual div.term > div.uprLeft
+{
+	position:absolute;
+	left:0;
+	top:0;
+	font-size:10px;
+	font-weight:bold;
+	font-family:Arial, Sans-Serif;
+}
+
+div.searchParams
+{
+	
+}
+table td
+{
+	padding-left:10px;
+	padding-right:10px;
+}
+table tr:first-child
+{
+	background-color:#FFFFFF;
+}

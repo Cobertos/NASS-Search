@@ -1,0 +1,3 @@
+"use strict";
+(function(NASSSearch){
+})(window.NASSSearch = window.NASSSearch || {});
