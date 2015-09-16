@@ -25,9 +25,21 @@ $.prototype.formVal = function(setTo)
 		}
 	}
 	else if(this.is("input[type='checkbox']"))
-		return this.prop("checked", setTo);
+	{
+		if(isDef(setTo))
+			var ret = this.prop("checked", setTo);
+		else
+			var ret = this.prop("checked");
+		return ret;
+	}
 	else
-		return this.val(setTo);
+	{
+		if(isDef(setTo))
+			var ret = this.val(setTo);
+		else
+			var ret = this.val();
+		return ret;
+	}
 };
 
 //NASSSearch related namespace stuff

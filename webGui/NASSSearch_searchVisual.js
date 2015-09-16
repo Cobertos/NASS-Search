@@ -96,7 +96,17 @@
 	};
 	NASSSearchControl.prototype.refresh = function()
 	{
-		this.jVisualEl.html(this.search.toDOM());
+		if(!isDef(this.jSelectedEl))
+		{
+			this.jVisualEl.html(this.search.toDOM()); //Init the entire search (doesn't matter if no selection
+		}
+		else
+		{
+			var newSelected = $(this.jSelectedEl[0].NASSTerm.toDOM());
+			this.jSelectedEl.replaceWith(newSelected); //Just the selected terms contents
+			this.jSelectedEl = newSelected
+			this.jSelectedEl.addClass("focus");
+		}
 	};
 	//Returns all the current panel fields as a dictionary
 	NASSSearchControl.prototype.applyDataToTerm = function(term)
@@ -104,10 +114,10 @@
 		if(!isDef(this.jCurrPanelEl))
 			throw "No current panel to get data from";
 			
-		$.each(this.jControlPanelEls.children("select, input").not("input[type='button']"), function(idx, jEl){
+		$.each(this.jCurrPanelEl.children("select, input").not("input[type='button']"), function(idx, jEl){
 			jEl = $(jEl);
 			var attr = jEl.attr("name");
-			var setTo = jEl.val();
+			var setTo = jEl.formVal();
 			if(isDef(term.terms[attr])) //Only set things that actually have a value
 			{
 				console.log("Will apply to term dict " + attr + " | " + setTo);
@@ -127,18 +137,18 @@
 		if(!isDef(this.jCurrPanelEl))
 			throw "No current panel to apply data to";
 			
-		$.each(this.jControlPanelEls.children("select, input").not("input[type='button']"), function(idx, jEl){
+		$.each(this.jCurrPanelEl.children("select, input").not("input[type='button']"), function(idx, jEl){
 			jEl = $(jEl);
 			var attr = jEl.attr("name");
 			if(isDef(term.terms[attr]))
 			{
 				console.log("Will get from term dict " + attr);
-				jEl.val(term.terms[attr]);
+				jEl.formVal(term.terms[attr]);
 			}
 			else if(isDef(term[attr]))
 			{
 				console.log("Will get from term " + attr);
-				jEl.val(term[attr]);
+				jEl.formVal(term[attr]);
 			}
 		});
 	};
