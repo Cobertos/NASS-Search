@@ -72,17 +72,24 @@
 			throw "Unidentified term";
 	};
 	NASSSearchVisual.prototype.refresh = function()
-	{
+	{	
 		if(!isDef(this.jSelectedEl))
 		{
 			this.jVisualEl.html(this.search.toDOM()); //Init the entire search (doesn't matter if no selection
 		}
 		else
 		{
+			//Test for a term change in the DOM
+			var oldTermType = this.getTermType(this.jSelectedEl);
+			
 			var newSelected = $(this.jSelectedEl[0].NASSTerm.toDOM(false));
 			this.jSelectedEl.replaceWith(newSelected); //Just the selected terms contents (so we can reapply the focus)
 			this.jSelectedEl = newSelected;
 			this.jSelectedEl.addClass("focus");
+			
+			//Did it change term type? Fire a new selection
+			if(oldTermType != this.getTermType(this.jSelectedEl))
+				this.notify("select", this.getTermType(this.jSelectedEl), this.jSelectedEl[0].NASSTerm);
 		}
 	};
 	NASSSearchVisual.prototype.applyDataToSelected = function(data)
@@ -110,18 +117,13 @@
 		"compareFunc":"Empty"});
 		
 		this.jSelectedEl[0].NASSTerm.add(blankTerm);
-		
-		//Test for a term change in the DOM
-		var oldTermType = this.getTermType(this.jSelectedEl);
 		this.refresh();
-		//Did it change term type? Fire a new selection
-		if(oldTermType != this.getTermType(this.jSelectedEl))
-			this.notify("select", this.getTermType(this.jSelectedEl), this.jSelectedEl[0].NASSTerm);
 	};
 	NASSSearchVisual.prototype.removeSelected = function()
 	{
 		this.jSelectedEl[0].NASSTerm.remove();
-		this.search.prune();
+		this.search.prune(false, false);
+		this.jSelectedEl = null;
 		this.refresh();
 	}
 	

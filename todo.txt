@@ -4,4 +4,3 @@
 
 USER INTERFACE
 * Fix error when clicking on the uprLeft div in a term (b/c it shouldnt be clicked on, use pointer-events:none)
-* Fix delete term not updating view

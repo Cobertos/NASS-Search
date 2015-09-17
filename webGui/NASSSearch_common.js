@@ -171,8 +171,14 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 		}
 	};
 	//Remove any terms from the entire tree that are flagDelete (from .remove)
-	NASSSearchTerm.prototype.prune = function()
+	//condense by default is true, condenses a listTerm with one term into a dictTerm
+	NASSSearchTerm.prototype.prune = function(condense, propagateCondense)
 	{
+		if(!isDef(condense))
+			condense = true;
+		if(!isDef(propagateCondense))
+			propagateCondense = true;
+		
 		if(is(this.terms, "obj"))
 			return; //Nothing we can do about ourselves
 		else if(is(this.terms, "array"))
@@ -181,7 +187,6 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 			$.each(this.terms, function(idx, term){
 				if(term instanceof NASSSearchTerm && term.flagDelete)
 				{
-					console.log("yyaa");
 					if(idx == self.terms.length-1)
 					{
 						//Last term, must remove the join before, not after
@@ -196,12 +201,14 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 				}
 				else if(term instanceof NASSSearchTerm)
 				{
-					term.prune();
+					this.prune(propagateCondense && condense);
 				}
 			});
+		}
+		if(condense && this.terms.length == 1)
+		{
 			//If there's only one element left, make this object a dict object
-			if(this.terms.length == 1)
-				this.terms = this.terms[0].terms;
+			this.terms = this.terms[0].terms;
 		}
 	};
 	//Remove a term
