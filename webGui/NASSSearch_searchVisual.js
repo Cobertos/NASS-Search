@@ -50,24 +50,27 @@
 			self.jSelectedEl = jEl;
 			jEl.addClass("focus");
 			
-			var which = "";
-			if(jEl.is(".rootTerm"))
-				which = "rootTerm";
-			else if(jEl.is(".dbTerm"))
-				which = "dbTerm";
-			else if(jEl.is(".listTerm"))
-				which = "listTerm";
-			else if(jEl.is(".join"))
-				which = "join";
-			
 			//Notify of selection, what type, and the term
-			self.notify("select", which, jEl[0].NASSTerm);
+			self.notify("select", self.getTermType(jEl), jEl[0].NASSTerm);
 		});
 		
 		this.refresh();
 	}
 	NASSSearch.NASSSearchVisual = NASSSearchVisual;
 	NASSSearchVisual.prototype = $.extend({}, new ObserverPattern());
+	NASSSearchVisual.prototype.getTermType = function(jTermEl)
+	{
+		if(jTermEl.is(".rootTerm"))
+			return "rootTerm";
+		else if(jTermEl.is(".dbTerm"))
+			return "dbTerm";
+		else if(jTermEl.is(".listTerm"))
+			return "listTerm";
+		else if(jTermEl.is(".join"))
+			return "join";
+		else
+			throw "Unidentified term";
+	};
 	NASSSearchVisual.prototype.refresh = function()
 	{
 		if(!isDef(this.jSelectedEl))
@@ -78,7 +81,7 @@
 		{
 			var newSelected = $(this.jSelectedEl[0].NASSTerm.toDOM(false));
 			this.jSelectedEl.replaceWith(newSelected); //Just the selected terms contents (so we can reapply the focus)
-			this.jSelectedEl = newSelected
+			this.jSelectedEl = newSelected;
 			this.jSelectedEl.addClass("focus");
 		}
 	};
@@ -107,7 +110,13 @@
 		"compareFunc":"Empty"});
 		
 		this.jSelectedEl[0].NASSTerm.add(blankTerm);
+		
+		//Test for a term change in the DOM
+		var oldTermType = this.getTermType(this.jSelectedEl);
 		this.refresh();
+		//Did it change term type? Fire a new selection
+		if(oldTermType != this.getTermType(this.jSelectedEl))
+			this.notify("select", this.getTermType(this.jSelectedEl), this.jSelectedEl[0].NASSTerm);
 	};
 	NASSSearchVisual.prototype.removeSelected = function()
 	{
@@ -162,7 +171,6 @@
 			throw "No current panel to get data from";
 		
 		var ret = {};
-		console.log(this.jCurrPanelEl);
 		$.each(this.jCurrPanelEl.find("select, input").not("input[type='button']"), function(idx, jEl){
 			jEl = $(jEl);
 			ret[jEl.attr("name")] = jEl.formVal();

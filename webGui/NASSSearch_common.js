@@ -181,6 +181,7 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 			$.each(this.terms, function(idx, term){
 				if(term instanceof NASSSearchTerm && term.flagDelete)
 				{
+					console.log("yyaa");
 					if(idx == self.terms.length-1)
 					{
 						//Last term, must remove the join before, not after
@@ -191,7 +192,7 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 						//Remove the term and following join
 						self.terms.splice(idx, 2);
 					}
-					return false; //Should only delete once per prune of an item (for now)
+					return false; //Should only delete once per prune of an listTerm (for now)
 				}
 				else if(term instanceof NASSSearchTerm)
 				{
