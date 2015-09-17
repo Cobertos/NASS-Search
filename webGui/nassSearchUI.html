@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>NHTSA NASS Search Tool</title>
+<link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" type="text/css" href="./NASSSearch_theme.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script src="./NASSSearch_common.js"></script>
@@ -17,65 +18,94 @@ var control = new NASSSearch.NASSSearchControl($("#searchControl"), $("#searchVi
 </script>
 </head>
 <body>
-<span style="font-size:30px; font-family:Arial, sans-serif;">NHTSA NASS Search Tool</span><br>
-
-<div id="searchContainer">
-	<div id="searchControl">
-		<div class="dbTermPanel">
-			Not: <input type="checkbox" name="inverse">
-			Database: <select name="dbName">
-			<option></option>
-			<option></option>
-			</select>
-			Column: <select name="colName">
-			<option></option>
-			<option></option>
-			</select>
-			Search Value: <input name="searchValue" type="text">
-			Search Type: <select name="compareFunc">
-			<option></option>
-			<option></option>
-			</select>
-			<input type="button" name="addButton" value="New Parenthesis Term">
-			<input type="button" name="deleteButton" value="Delete Term">
+<header>
+	<div class="bg"></div>
+	NHTSA NASS Search Tool
+</header>
+<main>
+	<div class="stylePanel stylePanelMargins">
+		<p>This is an advanced tool to search the <a href="http://www.nhtsa.gov/NASS">National Highway Transportation and Safety Administration(NHTSA) National Automotive Sampling System(NASS) database</a>.
+			This tool provides searching on any database column and special data export not found in the original NASS case viewer / search engine.</p>
+		<p>To perform a search, simply:</p>
+		<ul>
+			<li>Build a search by clicking the panel below</li>
+			<li>Select your year range and export format (if a file is desired for export)</li>
+			<li>Click the &apos;Go&apos; button to begin</li>
+		</ul>
+	</div>
+	<div id="searchContainer" class="stylePanelMargins">
+		<div id="searchControl" class="stylePanel">
+			<div class="dbTermPanel">
+				<div>Not: <input type="checkbox" name="inverse"></div>
+				<div>Database: <select name="dbName"></select></div>
+				<div>Column: <select name="colName"></select></div>
+				<div>Search Value: <input name="searchValue" type="text"></div>
+				<div>Search Type: <select name="compareFunc"></select></div>
+				<br>
+				Actions:<br>
+				<input type="button" name="addButton" value="New Parenthesis Term"><br>
+				<input type="button" name="deleteButton" value="Delete Term">
+			</div>
+			<div class="joinPanel">
+				<div>Join: <select name="joinSelect"></select></div>
+			</div>
+			<div class="listTermPanel">
+				<div>Not: <input type="checkbox" name="inverse"></div>
+				<br>
+				Actions:<br>
+				<input type="button" name="addButton" value="Add Term"><br>
+				<input type="button" name="deleteButton" value="Delete Term">
+			</div>
+			<div class="rootTermPanel">
+				Actions:<br>
+				<input type="button" name="addButton" value="Add Term"><br>
+			</div>
 		</div>
-		<div class="joinPanel">
-			Join: <select name="joinSelect">
-			<option>And</option>
-			<option>Or</option>
-			</select>
+		<div id="searchVisual" class="stylePanel">
+			<!--User builds search with javascript/jQuery here-->
 		</div>
-		<div class="listTermPanel">
-			Not: <input type="checkbox" name="inverse">
-			<input type="button" name="addButton" value="Add Term">
+		<div id="miscControl" class="stylePanel stylePanelMargins">
+			Year Range: <select name="yearRangeStart">
+				<option></option>
+				<option></option>
+				</select>
+				<select name="yearRangeEnd">
+				<option></option>
+				<option></option>
+				</select>
+				<br>
+			Export To:
+				<select name="exportTo">
+				<option></option>
+				<option></option>
+				</select>
 		</div>
 	</div>
-	<div id="searchVisual">
-		<!--User builds search with javascript/jQuery here-->
+	<div id="searchProgress" class="stylePanel stylePanelMargins">
+		<div class="goButton">Go</div>
 	</div>
-</div>
-
-<div style="display:none;">
-	<table border="0">
-	<tr>
-		<td>Case #</td>
-		<td>Link to Case</td>
-		<td>Matched filter</td>
-		<td>Excerpt</td>
-	</tr>
-	<tr>
-		<td>Case # 1</td>
-		<td><a href="#">Link to Case</a></td>
-		<td>DB_C| A_Field == aaa</td>
-		<td>&quote; some sentence where <span style="font-weight:bold">aaa</span> appears in the report &quote;</td>
-	</tr>
-	<tr>
-		<td>Case # 2</td>
-		<td><a href="#">Link to Case</a></td>
-		<td>DB_C| C_Field == ccc</td>
-		<td>&quote; in conclusion it was determined that <span style="font-weight:bold">ccc</span> was the cause &quote;</td>
-	</tr>
-</div>
-
+	<div id="searchResults" style="display:none;">
+		<table border="0">
+			<tr>
+				<td>Case #</td>
+				<td>Link to Case</td>
+				<td>Matched filter</td>
+				<td>Excerpt</td>
+			</tr>
+			<tr>
+				<td>Case # 1</td>
+				<td><a href="#">Link to Case</a></td>
+				<td>DB_C| A_Field == aaa</td>
+				<td>&quote; some sentence where <span style="font-weight:bold">aaa</span> appears in the report &quote;</td>
+			</tr>
+			<tr>
+				<td>Case # 2</td>
+				<td><a href="#">Link to Case</a></td>
+				<td>DB_C| C_Field == ccc</td>
+				<td>&quote; in conclusion it was determined that <span style="font-weight:bold">ccc</span> was the cause &quote;</td>
+			</tr>
+		</table>
+	</div>
+</main>
 </body>
 </html>

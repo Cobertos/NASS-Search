@@ -42,6 +42,39 @@ $.prototype.formVal = function(setTo)
 	}
 };
 
+//Observer model
+function ObserverPattern()
+{
+	this.subscribers = {};
+}
+ObserverPattern.prototype.notify = function(which)
+{
+	var args = [];
+	for(var i=1; i<arguments.length; i++)
+		args[i-1] = arguments[i];
+	
+	if(!isDef(this.subscribers[which]))
+		return;
+	$.each(this.subscribers[which], function(idx, how){
+		how.apply(null, args);
+	});
+};
+ObserverPattern.prototype.subscribe = function(which, how)
+{
+	if(!isDef(this.subscribers[which]))
+		this.subscribers[which] = [];
+	this.subscribers[which].push(how);
+};
+ObserverPattern.prototype.unsubscribe = function(which, how)
+{
+	if(!isDef(this.subscribers[which]))
+		return;
+	var where = this.subscribers[which].indexOf(how);
+	if(where <= -1)
+		return;
+	this.subscribers[which].splice(where,1);
+};
+
 //NASSSearch related namespace stuff
 //Includes the terms and joins similar to the python backend with some added functionality
 (function(NASSSearch){
@@ -62,6 +95,11 @@ $.prototype.formVal = function(setTo)
 		}
 	}	
 	
+	//Mimics pythons enum (kind of)
+	//NASSSearchJoin(val) to get an enum with value of val
+	//NASSSearchJoin.values[name] to get an enum by name
+	//.name is the name on enum
+	//.val is the value on enum
 	function NASSSearchJoin(val)
 	{
 		var findName = null;
@@ -86,11 +124,12 @@ $.prototype.formVal = function(setTo)
 	});
 
 	//Holds an entire search similar to the python version
-	function NASSSearchTerm(terms)
+	function NASSSearchTerm(terms, noErrorCheck)
 	{
 		this.inverse = false;
 		this.terms = terms;
-		this.errorCheck();
+		if(!(isDef(noErrorCheck) && noErrorCheck))
+			this.errorCheck();
 		
 		this.flagDelete = false;
 	};
@@ -131,6 +170,7 @@ $.prototype.formVal = function(setTo)
 			throw "Terms was not a dict term or a list term";
 		}
 	};
+	//Remove any terms from the entire tree that are flagDelete (from .remove)
 	NASSSearchTerm.prototype.prune = function()
 	{
 		if(is(this.terms, "obj"))
@@ -163,42 +203,53 @@ $.prototype.formVal = function(setTo)
 				this.terms = this.terms[0].terms;
 		}
 	};
+	//Remove a term
 	NASSSearchTerm.prototype.remove = function()
 	{
 		this.flagDelete = true;
 	};
-	NASSSearchTerm.prototype.add = function()
+	//Add an empty term
+	NASSSearchTerm.prototype.add = function(addTerm)
 	{
-		var blankTerm = new NASSSearchTerm(
-		{"dbName":"Empty",
-		"colName":"Empty",
-		"searchValue":"Empty",
-		"compareFunc":"Empty"});
-		
-		if(is(this.terms, "obj"))
-			this.terms = [new NASSSearchTerm(this.terms), NASSSearchJoin.AND, blankTerm];
+		//Make a new parenthesis term containing this term
+		if(is(this.terms, "obj")) 
+			this.terms = [new NASSSearchTerm(this.terms), NASSSearchJoin.AND, addTerm];
+		//Otherwise just add a term + join (if needed)
 		else if(is(this.terms, "array"))
 		{
-			this.terms.push(NASSSearchJoin.AND);
-			this.terms.push(blankTerm);
+			if(this.terms.length == 0)
+				this.terms.push(addTerm);
+			else
+			{
+				this.terms.push(NASSSearchJoin.AND);
+				this.terms.push(addTerm);
+			}
 		}
 	};
+	//Must explicitly pass rootTerm as false to not get the base term as rootTerm
 	NASSSearchTerm.prototype.toDOM = function()
-	{
-		var topTerm = $.parseHTML("<div class=\"term" + (this.inverse ? " not" : "") + (is(this.terms, "obj") ? " dbTerm" : " listTerm") + "\"></div>")[0];
+	{	
+		//Create the outer most div of the term with all classes
+		var topTerm = $.parseHTML("<div class=\"term"
+		+ (this.inverse ? " not" : "")
+		+ (is(this.terms, "obj") ? " dbTerm" : " listTerm")
+		+ "\"></div>")[0];
 		topTerm.NASSTerm = this; //Save ourselves on the DOM node for future reference
 		
 		var uprLeftTerm = $.parseHTML("<div class=\"uprLeft\"></div>")[0];
 		var uprLeftText = (this.inverse ? "Not" : "");
 		
+		//Convert the term to DOM
 		var nodes;
 		if(is(this.terms, "obj"))
 		{
+			//A dict term is just some text nodes
 			uprLeftText += (uprLeftText.length > 0 ? " | " : "") + this.terms["dbName"];
 			nodes = [document.createTextNode(this.terms["colName"] + " == " + this.terms["searchValue"])];
 		}
 		else if(is(this.terms, "array"))
 		{
+			//A list term is more terms and join terms
 			nodes = []
 			$.each(this.terms, function(idx, term){
 				if(term instanceof NASSSearchTerm)
@@ -207,10 +258,12 @@ $.prototype.formVal = function(setTo)
 					nodes.push($.parseHTML("<div class=\"term join\">" + term.name + "</div>")[0]);
 			});
 		}
+		//Put them all in the outer term
 		$.each(nodes, function(idx, node){
 			topTerm.appendChild(node);
 		});
 		
+		//Prepend any upper left text if necessary
 		if(uprLeftText.length > 0)
 		{
 			uprLeftTerm.appendChild(document.createTextNode(uprLeftText));
