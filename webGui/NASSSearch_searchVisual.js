@@ -162,7 +162,8 @@
 			throw "No current panel to get data from";
 		
 		var ret = {};
-		$.each(this.jCurrPanelEl.children("select, input").not("input[type='button']"), function(idx, jEl){
+		console.log(this.jCurrPanelEl);
+		$.each(this.jCurrPanelEl.find("select, input").not("input[type='button']"), function(idx, jEl){
 			jEl = $(jEl);
 			ret[jEl.attr("name")] = jEl.formVal();
 		});
@@ -173,7 +174,7 @@
 		if(!isDef(this.jCurrPanelEl))
 			throw "No current panel to apply data to";
 			
-		$.each(this.jCurrPanelEl.children("select, input").not("input[type='button']"), function(idx, jEl){
+		$.each(this.jCurrPanelEl.find("select, input").not("input[type='button']"), function(idx, jEl){
 			jEl = $(jEl);
 			var attr = jEl.attr("name");
 			if(isDef(term.terms[attr]))
