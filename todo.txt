@@ -1,3 +1,9 @@
 * Make the tests a bit more robust
 * Add the line joining in nassDB
 * Add options to both nass and nassPreprocess eventually
+
+USER INTERFACE
+* Fix error when clicking on the uprLeft div in a term (b/c it shouldnt be clicked on, use pointer-events:none)
+* Fix bug where panel does not change if we make a new parenthesis term or something
+* Fix listTerm 'not' not showing up
+* Fix delete term not updating view
