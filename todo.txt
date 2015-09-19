@@ -3,5 +3,4 @@
 * Add options to both nass and nassPreprocess eventually
 
 USER INTERFACE
-* Fix error when clicking on the uprLeft div in a term for IE<11
 * Fix search builder not resizing it's height

@@ -172,12 +172,12 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 	};
 	//Remove any terms from the entire tree that are flagDelete (from .remove)
 	//condense by default is true, condenses a listTerm with one term into a dictTerm
-	NASSSearchTerm.prototype.prune = function(condense, propagateCondense)
+	NASSSearchTerm.prototype.prune = function(condense, onlyFirstLevel)
 	{
 		if(!isDef(condense))
 			condense = true;
-		if(!isDef(propagateCondense))
-			propagateCondense = true;
+		if(!isDef(onlyFirstLevel))
+			onlyFirstLevel = false;
 		
 		if(is(this.terms, "obj"))
 			return; //Nothing we can do about ourselves
@@ -201,7 +201,10 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 				}
 				else if(term instanceof NASSSearchTerm)
 				{
-					this.prune(propagateCondense && condense);
+					if(!onlyFirstLevel)
+						this.prune(condense, onlyFirstLevel);
+					else
+						this.prune(); //Prune with defaults
 				}
 			});
 		}

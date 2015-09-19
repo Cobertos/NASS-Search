@@ -122,13 +122,13 @@
 	NASSSearchVisual.prototype.removeSelected = function()
 	{
 		this.jSelectedEl[0].NASSTerm.remove();
-		this.search.prune(false, false);
+		this.search.prune(false, true); //Only condense things above the first level in this.search
 		this.jSelectedEl = null;
 		this.refresh();
 	}
 	
 	//The control panel that ties in with the visual search panel
-	function NASSSearchPanel(jControlEl)
+	function NASSSearchVisualControl(jControlEl)
 	{
 		//Set up the control panels
 		this.jControlPanelEls = jControlEl.children();
@@ -146,9 +146,9 @@
 			self.notify("change");
 		});
 	}
-	NASSSearch.NASSSearchPanel = NASSSearchPanel;
-	NASSSearchPanel.prototype = $.extend({}, new ObserverPattern());
-	NASSSearchPanel.prototype.showPanel = function(which)
+	NASSSearch.NASSSearchVisualControl = NASSSearchVisualControl;
+	NASSSearchVisualControl.prototype = $.extend({}, new ObserverPattern());
+	NASSSearchVisualControl.prototype.showPanel = function(which)
 	{
 		if(isDef(which))
 		{
@@ -167,7 +167,7 @@
 			this.jCurrPanelEl = null;
 		}
 	};
-	NASSSearchPanel.prototype.getDataFromPanel = function()
+	NASSSearchVisualControl.prototype.getDataFromPanel = function()
 	{
 		if(!isDef(this.jCurrPanelEl))
 			throw "No current panel to get data from";
@@ -179,7 +179,7 @@
 		});
 		return ret;
 	};
-	NASSSearchPanel.prototype.applyTermToPanel = function(term)
+	NASSSearchVisualControl.prototype.applyTermToPanel = function(term)
 	{
 		if(!isDef(this.jCurrPanelEl))
 			throw "No current panel to apply data to";
@@ -203,7 +203,7 @@
 	{
 		//Set up the visual search portion
 		this.searchBuilderVisual = new NASSSearchVisual(null, jVisualEl);
-		this.searchBuilderPanel = new NASSSearchPanel(jControlEl);
+		this.searchBuilderPanel = new NASSSearchVisualControl(jControlEl);
 		
 		//All the connections
 		var self = this;
