@@ -20,7 +20,7 @@ def equal(found, find):
     return find == found
 def startsWith(found, find):
     return found.startsWith(find)
-prefs["supportedCompareFunc"] = {name : locals()[name] for name in [stringIn, equal, startsWith]}
+prefs["supportedCompareFuncs"] = {name : globals()[name] for name in ["stringIn", "equal", "startsWith"]}
 
 data = {}
 

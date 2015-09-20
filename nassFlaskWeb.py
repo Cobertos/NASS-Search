@@ -28,14 +28,14 @@ def init():
     
     #Search related supports
     supported["join"] = [enumObj.name for enumObj in nassSearchTerm.NASSSearchJoin]
-    supported["compareFunc"] = prefs["supportedCompareFuncs"].keys()
+    supported["compareFunc"] = list(nassGlobal.prefs["supportedCompareFuncs"].keys())
     supported["export"] = ["not", "currently", "implemented"]
     
     class SetEncoder(json.JSONEncoder):
         def default(self, obj):
             if isinstance(obj, set):
                 return list(obj)
-            return super().default(self, obj)
+            return super().default(obj)
     
     return json.dumps(supported, cls=SetEncoder)
     
@@ -46,7 +46,7 @@ def presearch():
         "dbName" : {dbData.prettyName : db for db, dbData in prefs["staticDBInfo"].dbs},
         "colName" : null,
         "searchValue" : null,
-        "compareFunc" : prefs["supportedCompareFuncs"]
+        "compareFunc" : nassGlobal.prefs["supportedCompareFuncs"]
     }
     NASSSearchTerm.fromStrList(searchJSON, translateObj)
     
