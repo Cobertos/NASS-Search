@@ -14,6 +14,14 @@ os.path.normpath("Expanded SAS/UNFORMATTED")]
 #Keys kept for stub cases
 prefs["stubKeys"] = ["CASENO", "PSU", "VEHNO", "OCCNO"]
 
+def stringIn(found, find):
+    return find in found
+def equal(found, find):
+    return find == found
+def startsWith(found, find):
+    return found.startsWith(find)
+prefs["supportedCompareFunc"] = {name : locals()[name] for name in [stringIn, equal, startsWith]}
+
 data = {}
 
 fstaticDBInfo = open("staticDBInfo.json", "r")

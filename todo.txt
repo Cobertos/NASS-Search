@@ -3,4 +3,5 @@
 * Add options to both nass and nassPreprocess eventually
 
 USER INTERFACE
+* Pointer-options fix for <IE11
 * Fix search builder not resizing it's height

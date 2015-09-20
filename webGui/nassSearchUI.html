@@ -7,14 +7,10 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script src="./NASSSearch_common.js"></script>
 <script src="./NASSSearch_searchVisual.js"></script>
+<script src="./NASSSearch_main.js"></script>
 <script>
 "use strict";
-
-//Not in NASS Namespace, create the oversight object
-//Requires all NASSSearch and jQuery to be loaded
-window.addEventListener("load", function(){
-var control = new NASSSearch.NASSSearchControl($("#searchControl"), $("#searchVisual"));
-});
+var document.nassSearch = new NASSSearchMain();
 </script>
 </head>
 <body>

@@ -128,12 +128,14 @@
 	}
 	
 	//The control panel that ties in with the visual search panel
-	function NASSSearchVisualControl(jControlEl)
+	function NASSSearchVisualControl(jControlEl, dataLists)
 	{
 		//Set up the control panels
 		this.jControlPanelEls = jControlEl.children();
 		this.jControlPanelEls.css("display", "none");
 		this.jCurrPanelEl = null; //Start with no panel
+		this.supportedData = dataLists;
+		
 		//Handlers
 		var self = this;
 		jControlEl.on("click", "input[type='button'][name='addButton']", function(e){
@@ -159,7 +161,18 @@
 			this.jControlPanelEls.css("display", "none");
 			this.jCurrPanelEl.css("display", "block");
 			
-			//Should populate the panel with appropriate data
+			$.each(this.jCurrPanelEl.find("select"), function(idx, jEl){
+				jEl = $(jEl);
+				var name = jEl.attr("name");
+				var options = "";
+				if(!isDef(this.supportedData[name]))
+					continue;
+				
+				$.each(this.supportedData[name], function(idx, datum){
+					options.push("<option value=\"" + datum.value + "\">" + datum.name + "</option>");
+				});
+				jEl.html(options);
+			});
 		}
 		else
 		{
