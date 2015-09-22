@@ -4,7 +4,6 @@
 
 USER INTERFACE
 * Pointer-options fix for <IE11
-* Fix search builder not resizing it's height
 * Fix problems where the select selected option isn't showing in the box (and making the value of that select null)
 * Add the thing to update the other options when one of the select changes (it refills certain dependant select tags)
 * User friendly names (partial support on backend for this already with translateObj, just implement it everywhere)
