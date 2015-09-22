@@ -5,13 +5,15 @@
 
 (function(NASSSearch){
 	//The visual search panel
-	function NASSSearchVisual(searchInit, jVisualEl)
+	function NASSSearchVisual(searchInit, jVisualEl, blankTerm)
 	{
 		//A small wrapper around the full search for UI purposes
 		//Becomes a term with one term in it, this term will eventually be stripped off when finalizing the search
 		this.search = new NASSSearch.NASSSearchTerm([], true);
 		if(isDef(searchInit))
 			this.search.terms.push(searchInit);
+		
+		this.blankTerm = blankTerm;
 		
 		//Patch the rootTerm's toDOM to give it special classes
 		var oldToDOM = this.search.toDOM;
@@ -110,13 +112,7 @@
 	};
 	NASSSearchVisual.prototype.addSelected = function()
 	{
-		var blankTerm = new NASSSearch.NASSSearchTerm(
-		{"dbName":"Empty",
-		"colName":"Empty",
-		"searchValue":"Empty",
-		"compareFunc":"Empty"});
-		
-		this.jSelectedEl[0].NASSTerm.add(blankTerm);
+		this.jSelectedEl[0].NASSTerm.add(this.blankTerm.copy());
 		this.refresh();
 	};
 	NASSSearchVisual.prototype.removeSelected = function()
@@ -234,7 +230,7 @@
 	{
 		if(!isDef(this.jCurrPanelEl))
 			throw "No current panel to apply data to";
-			
+		
 		$.each(this.jCurrPanelEl.find("select, input").not("input[type='button']"), function(idx, jEl){
 			jEl = $(jEl);
 			var attr = jEl.attr("name");
@@ -253,7 +249,12 @@
 	function NASSSearchControl(nassMain, jControlEl, jVisualEl)
 	{
 		//Set up the visual search portion
-		this.searchBuilderVisual = new NASSSearchVisual(null, jVisualEl);
+		var blankTerm = new NASSSearch.NASSSearchTerm(
+		{"dbName":nassMain.initData["dbName"][0],
+		"colName":nassMain.initData["colName"][nassMain.initData["dbName"][0]][0],
+		"searchValue":"Value",
+		"compareFunc":nassMain.initData["compareFunc"][0]});
+		this.searchBuilderVisual = new NASSSearchVisual(null, jVisualEl, blankTerm);
 		this.searchBuilderPanel = new NASSSearchVisualControl(jControlEl, nassMain.initData);
 		
 		//All the connections

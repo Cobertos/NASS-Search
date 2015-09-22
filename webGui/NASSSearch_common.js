@@ -27,18 +27,16 @@ $.prototype.formVal = function(setTo)
 	else if(this.is("input[type='checkbox']"))
 	{
 		if(isDef(setTo))
-			var ret = this.prop("checked", setTo);
+			return this.prop("checked", setTo);
 		else
-			var ret = this.prop("checked");
-		return ret;
+			return this.prop("checked");
 	}
 	else
 	{
 		if(isDef(setTo))
-			var ret = this.val(setTo);
+			return this.val(setTo);
 		else
-			var ret = this.val();
-		return ret;
+			return this.val();
 	}
 };
 $.extendSelective = function(extendee, extender, filter)
@@ -130,7 +128,22 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 		this.flagDelete = false;
 	};
 	NASSSearch.NASSSearchTerm = NASSSearchTerm;
-	NASSSearchTerm.prototype.errorCheck = function(){
+	NASSSearchTerm.prototype.copy = function()
+	{
+		var newTerm;
+		if(is(this.terms, "obj"))
+		{
+			newTerm = new NASSSearchTerm($.extend({}, this.terms));
+		}
+		else if(is(this.terms, "array"))
+		{
+			throw "Not implemented";
+		}
+		newTerm.inverse = this.inverse;
+		return newTerm;
+	};
+	NASSSearchTerm.prototype.errorCheck = function()
+	{
 		//Safety check for empty lists
 		if(this.terms.length == 0)
 			throw "No search terms were given"
