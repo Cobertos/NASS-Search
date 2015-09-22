@@ -3,6 +3,7 @@
 <head>
 <title>NHTSA NASS Search Tool</title>
 <link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+<link rel="icon" type="image/ico" href="./favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="./NASSSearch_theme.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script src="./NASSSearch_common.js"></script>
@@ -10,7 +11,7 @@
 <script src="./NASSSearch_main.js"></script>
 <script>
 "use strict";
-var document.nassSearch = new NASSSearchMain();
+document.nassMain = new NASSSearch.NASSSearchMain();
 </script>
 </head>
 <body>
@@ -22,6 +23,7 @@ var document.nassSearch = new NASSSearchMain();
 	<div class="stylePanel stylePanelMargins">
 		<p>This is an advanced tool to search the <a href="http://www.nhtsa.gov/NASS">National Highway Transportation and Safety Administration(NHTSA) National Automotive Sampling System(NASS) database</a>.
 			This tool provides searching on any database column and special data export not found in the original NASS case viewer / search engine.</p>
+		<p>This site is in no way affiliated with the US government or NHTSA.</p>
 		<p>To perform a search, simply:</p>
 		<ul>
 			<li>Build a search by clicking the panel below</li>

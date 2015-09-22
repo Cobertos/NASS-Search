@@ -12,7 +12,7 @@
 		
 		//Perform the init query
 		var self = this;
-		$.ajax("/init", {method : "POST"})
+		$.ajax("/api_init", {method : "GET"})
 			.done(function(data, status, jXHR){
 				self.initData = JSON.parse(data);
 				self.ready();
@@ -27,7 +27,7 @@
 		if(this.readys < this.readysNeeded)
 			return;
 		
-		this.searchGUI = new NASSSearch.NASSSearchControl($("#searchControl"), $("#searchVisual"), this.initData);
+		this.searchGUI = new NASSSearch.NASSSearchControl(this, $("#searchControl"), $("#searchVisual"));
 		
 		this.isReady = true;
 	};

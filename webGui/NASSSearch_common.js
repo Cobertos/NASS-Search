@@ -41,6 +41,14 @@ $.prototype.formVal = function(setTo)
 		return ret;
 	}
 };
+$.extendSelective = function(extendee, extender, filter)
+{
+	for(var key in extender)
+		if(filter.indexOf(key) != -1 && extender.hasOwnProperty(key))
+			extendee[key] = extender[key];
+		
+	return extendee;
+};
 
 //Observer model
 function ObserverPattern()

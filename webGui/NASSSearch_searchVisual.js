@@ -128,13 +128,13 @@
 	}
 	
 	//The control panel that ties in with the visual search panel
-	function NASSSearchVisualControl(jControlEl, dataLists)
+	function NASSSearchVisualControl(jControlEl, supportedData)
 	{
 		//Set up the control panels
 		this.jControlPanelEls = jControlEl.children();
 		this.jControlPanelEls.css("display", "none");
 		this.jCurrPanelEl = null; //Start with no panel
-		this.supportedData = dataLists;
+		this.supportedData = supportedData;
 		
 		//Handlers
 		var self = this;
@@ -161,18 +161,56 @@
 			this.jControlPanelEls.css("display", "none");
 			this.jCurrPanelEl.css("display", "block");
 			
-			$.each(this.jCurrPanelEl.find("select"), function(idx, jEl){
-				jEl = $(jEl);
-				var name = jEl.attr("name");
+			//Fill all the select tags
+			var fillSelect = function(jSelectEl, strArray)
+			{
 				var options = "";
-				if(!isDef(this.supportedData[name]))
-					continue;
-				
-				$.each(this.supportedData[name], function(idx, datum){
-					options.push("<option value=\"" + datum.value + "\">" + datum.name + "</option>");
+				var selected = false;
+				$.each(strArray, function(idx, str){
+					options += "<option" + (selected ? "" : " selected=\"selected\"" ) + " value=\"" + str + "\">" + str + "</option>";
+					selected = true;
 				});
-				jEl.html(options);
-			});
+				jSelectEl.html(options);
+			};
+			
+			var self = this;
+			var toFill = this.jCurrPanelEl.find("select");
+			var filled = {};
+			while(toFill.length > 0)
+			{
+				$.each(toFill.splice(0), function(idx, jEl){
+					jEl = $(jEl);
+					var name = jEl.attr("name");
+					var fillData = self.supportedData[name];
+					if(!isDef(fillData))
+						throw "No fill data for select";
+					else
+					{
+						if(Object.prototype.toString.call(fillData) === "[object Array]")
+						{
+							fillSelect(jEl, self.supportedData[name]);
+						}
+						else if(Object.prototype.toString.call(fillData) === "[object Object]")
+						{
+							//Relies on another select tag
+							if(name == "colName" && isDef(filled["dbName"]))
+							{
+								fillSelect(jEl, fillData[filled["dbName"].val()]);
+							}
+							else
+							{
+								throw "Dependant select not informed of other select.";
+							}
+						}
+						else
+						{
+							throw "Unexpected type for select object";
+						}
+					}
+					filled[name] = jEl;
+					toFill = toFill.not(jEl);
+				});
+			}
 		}
 		else
 		{
@@ -212,11 +250,12 @@
 	};
 	
 	//Responsible for the observation of the entire application
-	function NASSSearchControl(jControlEl, jVisualEl)
+	function NASSSearchControl(nassMain, jControlEl, jVisualEl)
 	{
 		//Set up the visual search portion
 		this.searchBuilderVisual = new NASSSearchVisual(null, jVisualEl);
-		this.searchBuilderPanel = new NASSSearchVisualControl(jControlEl);
+		var supportedData = $.extendSelective({}, nassMain.initData, ["dbName","colName","compareFunc","join"]);
+		this.searchBuilderPanel = new NASSSearchVisualControl(jControlEl, supportedData);
 		
 		//All the connections
 		var self = this;

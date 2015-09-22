@@ -1,11 +1,27 @@
 import json
-
-from flask import Flask
+import os
+import mimetypes
+   
+from flask import Flask, url_for, redirect
 app = Flask("NASS")
 app.debug = True
 
 import nassGlobal
 import nassSearchTerm
+
+@app.route('/app/<path:file>')
+def serve(file):
+    path = "./webGui/" + file
+    if(os.path.isfile(path)):
+        resp = app.make_response(open(path, "rb").read())
+        resp.mimetype = mimetypes.guess_type(file)[0]
+        return resp
+    else:
+        abort(404)
+
+@app.route('/')
+def root():
+    return redirect(url_for("serve",file="nassSearchUI.html"), 302)
 
 @app.route('/api_init')
 def init():
