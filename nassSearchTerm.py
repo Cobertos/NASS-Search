@@ -185,13 +185,66 @@ class NASSSearchTerm():
                 
             return resolvedList[0]
     
-    #Instead of forming a search term with dicts, tuples and the above classes, a term can be formed from
+    #Returns all the dicts from the entire NASSSearch term tree in one list
+    def dictTerms(self):
+        if isinstance(self.terms, dict):
+            return self.terms
+        elif isinstance(self.terms, list):
+            retObj = []
+            for term in self.terms:
+                moreTerms = term.dictTerms()
+                if isinstance(moreTerms, list):
+                    retObj.extend(moreTerms)
+                else:
+                    retObj.append(moreTerms)
+                    
+            return retObj
+        
+    
+    #Acts like a normal NASSSearchTerm without the class types
+    #Has dicts, lists, etc, in places they'd normally be and joins become strings
+    @classmethod
+    def fromJSON(cls, jsonObj, translateObj=None):
+        #Strings ==> Joins
+        if isinstance(jsonObj, string):
+            return NASSSearchJoin[jsonObj]
+        #Dicts ==> Dict term (with translation)
+        elif isinstance(jsonObj.terms, dict):
+            #See if we need to translate any dict terms
+            if translateObj:
+                for transKey, transDict in translateObj.items():
+                    #Do we want to translate this term
+                    if not transDict:
+                        continue
+                    
+                    #Is this term in the dictionary
+                    if not transKey in jsonObj.terms:
+                        raise ValueError("No such property " + transKey + " on jsonObj")
+                    
+                    #Can't translate this value
+                    if not jsonObj.terms[transKey] in transDict.keys():
+                        continue
+                    
+                    #Apply the translated value based on the dictionary
+                    jsonObj.terms[transKey] = transDict[jsonObj.terms[transKey]]
+                    
+            return NASSSearchTerm(jsonObj.terms, inverse=jsonObj.inverse)
+        #List ==> List term of all converted terms
+        elif isinstance(jsonObj.terms, list):
+            arrObj = []
+            for term in jsonObj.terms:
+                arrObj.append(cls.fromJSON(term))
+            
+            return NASSSearchTerm(arrObj, inverse=jsonObj.inverse)
+    
+    #Another import/export format for terms, this one specifically easy to write in python
+    #Instead of forming a search term with dicts, tuples and the above classes, or JSON, a term can be formed from
     #1) A 4 or 5 tuple (["NOT"], dbName, colName, searchValue, compareFunc) for a single dict term
     #2) A list of the form [["NOT"], term, joinerString, term, joinerString, term ...] where terms are more 4/5 tuples or lists
     #The "NOT"s are optional in both cases to invert certain strings
     #JoinerString is a string representation of NASSSearchJoin
     @classmethod
-    def fromStrList(cls, stringTerms):
+    def fromStrList(cls, stringTerms, translateObj=None):
         inverse = False
         if stringTerms[0] == "NOT":
             inverse = True

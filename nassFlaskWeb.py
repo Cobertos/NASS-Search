@@ -57,19 +57,56 @@ def init():
     
 @app.route('/api_presearch')
 def presearch():
-    searchJSON = json.loads(flask.request.data)
-    translateObj = {
+    jsonObj = json.loads(flask.request.data)
+    """translateObj = {
         "dbName" : {dbData.prettyName : db for db, dbData in prefs["staticDBInfo"].dbs},
-        "colName" : null,
-        "searchValue" : null,
+        "colName" : None,
+        "searchValue" : None,
         "compareFunc" : nassGlobal.prefs["supportedCompareFuncs"]
-    }
-    NASSSearchTerm.fromStrList(searchJSON, translateObj)
+    }"""
+    searchTerm = NASSSearchTerm.fromJSON(jsonObj, translateObj)
+    searchDicts = searchTerm.dictTerms()
+    searchLookupDict = {}
+    for d in searchDicts:
+        for k, v in d.items():
+            if not k in searchLookupDict:
+                searchLookupDict[k] = set()
+            searchLookupDict[k].add(v)
+    for k, v in searchLookupDict:
+        searchLookupDict[k] = list(v)
     
-    #Do a presearch (compare everything to just the values of each DB and columns for each value)
-    #Return alerts
-
-    return 'Presearch'
+    
+    #Do the presearch, generate alerts
+    alerts = []
+    #Alerts for years excluded
+    for year, yearData in nassGlobal.data["preprocessDBInfo"].items():
+        shouldBreak = False
+        #ALERT TYPE: Database not in year of range
+        for db in searchLookupDict["dbName"]:
+            if not db in yearData["dbs"].keys():
+                alerts.append({
+                    "name" : "Year " + year + " excluded",
+                    "shortName" : "YEAR " + year + " EXCL",
+                    "description" : "The year " + year + " does not contain an entry for database " + db + " (which is in your search terms) and so year " + year + " will be excluded."
+                })
+                break
+                
+            #ALERT TYPE: Column not in database of a given year
+            for col in searchLookupDict["colName"]:
+                if not col in yearData["dbs"][db]:
+                    alerts.append({
+                        "name" : "Year " + year + " excluded",
+                        "shortName" : "YEAR " + year + " EXCL",
+                        "description" : "The year " + year + " contains database " + db + " but does not have column " + col + " and so will be excluded."
+                    })
+                    shouldBreak = True
+                    break
+            if shouldBreak:
+                shouldBreak = False
+                break
+                
+    
+    return json.dumps(alerts)
     
 @app.route('/api_search')
 def search():

@@ -279,6 +279,11 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 	};
 	NASSSearchTerm.prototype.toJSON = function()
 	{
-		throw "Not implemented yet";
+		var stringifier = {"inverse" : this.inverse};
+		if(is(this.terms, "obj"))
+			stringifier.terms = $.extendSelective({}, this.terms, ["dbName", "colName", "searchValue", "matchFunc"]);
+		else if(is(this.terms, "array"))
+			stringifier.terms = this.terms;
+		return JSON.stringify(stringifier);
 	};
 })(window.NASSSearch = window.NASSSearch || {});
