@@ -97,7 +97,7 @@
 		//Data is a dictionary of term attributes (in the dict term or on the term itself) to values
 		var term = this.jSelectedEl[0].NASSTerm;
 		$.each(data, function(k, v){
-			if(isDef(term.terms[k])) //Only set things that actually have a value
+			if(isDef(term.terms) && isDef(term.terms[k])) //Only set things that actually have a value
 			{
 				term.terms[k] = v;
 			}
@@ -238,7 +238,7 @@
 		$.each(this.jCurrPanelEl.find("select, input").not("input[type='button']"), function(idx, jEl){
 			jEl = $(jEl);
 			var attr = jEl.attr("name");
-			if(isDef(term.terms[attr]))
+			if(isDef(term.terms) && isDef(term.terms[attr]))
 			{
 				jEl.formVal(term.terms[attr]);
 			}
@@ -254,8 +254,7 @@
 	{
 		//Set up the visual search portion
 		this.searchBuilderVisual = new NASSSearchVisual(null, jVisualEl);
-		var supportedData = $.extendSelective({}, nassMain.initData, ["dbName","colName","compareFunc","join"]);
-		this.searchBuilderPanel = new NASSSearchVisualControl(jControlEl, supportedData);
+		this.searchBuilderPanel = new NASSSearchVisualControl(jControlEl, nassMain.initData);
 		
 		//All the connections
 		var self = this;

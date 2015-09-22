@@ -103,33 +103,21 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 		}
 	}	
 	
-	//Mimics pythons enum (kind of)
-	//NASSSearchJoin(val) to get an enum with value of val
-	//NASSSearchJoin.values[name] to get an enum by name
-	//.name is the name on enum
-	//.val is the value on enum
-	function NASSSearchJoin(val)
+	//Holds a string (kind of like a enum)
+	function NASSSearchJoin(joinName)
 	{
-		var findName = null;
-		$.each(NASSSearchJoin.values, function(name, v){
-			if(val == v)
-			{
-				findName = name;
-				return false;
-			}
-		});
-		if(!isDef(findName))
-			throw "NASSSearchJoin with value " + val + " does not exist";
-		this.name = findName;
-		this.val = val;
+		this.joinName = joinName;
 	}
-	NASSSearchJoin.values = {
-		"AND" : 0,
-		"OR" : 1
+	NASSSearchJoin.prototype.toDOM = function()
+	{
+		var joinTerm = $.parseHTML("<div class=\"term join\">" + this.joinName + "</div>")[0];
+		joinTerm.NASSTerm = this;
+		return joinTerm;
 	};
-	$.each(NASSSearchJoin.values, function(name, val){
-		NASSSearchJoin[name] = new NASSSearchJoin(val);
-	});
+	NASSSearchJoin.prototype.toJSON = function()
+	{
+		return this.joinName;
+	};
 
 	//Holds an entire search similar to the python version
 	function NASSSearchTerm(terms, noErrorCheck)
@@ -232,7 +220,7 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 	{
 		//Make a new parenthesis term containing this term
 		if(is(this.terms, "obj")) 
-			this.terms = [new NASSSearchTerm(this.terms), NASSSearchJoin.AND, addTerm];
+			this.terms = [new NASSSearchTerm(this.terms), new NASSSearchJoin("AND"), addTerm];
 		//Otherwise just add a term + join (if needed)
 		else if(is(this.terms, "array"))
 		{
@@ -240,12 +228,13 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 				this.terms.push(addTerm);
 			else
 			{
-				this.terms.push(NASSSearchJoin.AND);
+				this.terms.push(new NASSSearchJoin("AND"));
 				this.terms.push(addTerm);
 			}
 		}
 	};
-	//Must explicitly pass rootTerm as false to not get the base term as rootTerm
+	//Generates a DOM tree of the search with lots of different classes for styling
+	//Also, every term in the tree has a NASSTerm tag on it to get the term it represents in the class tree
 	NASSSearchTerm.prototype.toDOM = function()
 	{	
 		//Create the outer most div of the term with all classes
@@ -271,10 +260,7 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 			//A list term is more terms and join terms
 			nodes = []
 			$.each(this.terms, function(idx, term){
-				if(term instanceof NASSSearchTerm)
-					nodes.push(term.toDOM());
-				else if(term instanceof NASSSearchJoin)
-					nodes.push($.parseHTML("<div class=\"term join\">" + term.name + "</div>")[0]);
+				nodes.push(term.toDOM());
 			});
 		}
 		//Put them all in the outer term
@@ -290,5 +276,9 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 		}
 		
 		return topTerm;
+	};
+	NASSSearchTerm.prototype.toJSON = function()
+	{
+		throw "Not implemented yet";
 	};
 })(window.NASSSearch = window.NASSSearch || {});

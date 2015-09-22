@@ -43,7 +43,7 @@ def init():
                 #TODO: Add the searchValue stuff
     
     #Search related supports
-    supported["join"] = [enumObj.name for enumObj in nassSearchTerm.NASSSearchJoin]
+    supported["joinName"] = [enumObj.name for enumObj in nassSearchTerm.NASSSearchJoin]
     supported["compareFunc"] = list(nassGlobal.prefs["supportedCompareFuncs"].keys())
     supported["export"] = ["not", "currently", "implemented"]
     
