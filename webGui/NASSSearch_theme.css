@@ -11,6 +11,10 @@ p
 {
 	margin-top:0;
 }
+input[type='text'], select
+{
+	font-size:0.8em;
+}
 
 /*The header*/
 header
@@ -63,18 +67,24 @@ div.stylePanelMargins
 }
 #searchControl
 {
+	box-sizing: border-box;
 	margin:0;
 	float:left;
-	margin-right:20px;
 	width:300px;
-	min-height:300px;
+	margin-right:20px;
+	min-height:340px;
+}
+#searchControl > div > div /*Form elements*/
+{
+	margin-bottom:5px;
 }
 #searchVisual
 {
+	padding:0;
 	margin:0;
 	position:relative;
 	overflow:hidden;
-	min-height:300px;
+	min-height:340px;
 }
 
 #searchVisual div.term:not(.rootTerm)
@@ -90,7 +100,7 @@ div.stylePanelMargins
 }
 #searchVisual div.term.rootTerm
 {
-	min-height:300px;
+	min-height:340px;
 }
 #searchVisual div.term.rootTerm.emptyListTerm
 {
@@ -104,11 +114,11 @@ div.stylePanelMargins
 }
 #searchVisual div.term.dbTerm:not(.rootTerm)
 {
-	padding-top:12px;
+	padding-top:0.8em;
 }
 #searchVisual div.term.listTerm:not(.rootTerm)
 {
-	padding-top:8px;
+	padding:8px;
 }
 #searchVisual div.term.join
 {
@@ -132,9 +142,8 @@ div.stylePanelMargins
 	position:absolute;
 	left:0;
 	top:0;
-	font-size:10px;
+	font-size:0.7em;
 	font-weight:bold;
-	font-family:Arial, Sans-Serif;
 }
 
 /*Buttons*/
