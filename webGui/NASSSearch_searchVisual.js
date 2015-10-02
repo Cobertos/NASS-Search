@@ -201,7 +201,7 @@
 				{
 					if(fullFill)
 					{
-						fillSelect(jEl, self.supportedData[name]);
+						fillSelect(jEl, fillData.sort());
 					}
 					//else - Skip it
 				}
@@ -219,7 +219,7 @@
 					//If fullFill (always fill) or if the current fillKey differs from the one it was filled with, fill it
 					if(fullFill || (isDef(jEl[0].fillKey) && jEl[0].fillKey != fillKey))
 					{
-						fillSelect(jEl, fillData[fillKey]);
+						fillSelect(jEl, fillData[fillKey].sort());
 						jEl[0].fillKey = fillKey;
 					}
 					//else - Skip it
