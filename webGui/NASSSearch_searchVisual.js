@@ -141,6 +141,8 @@
 			self.notify("delete");
 		});
 		jControlEl.on("change keyup", "select, input:not(input[type='button'])", function(e){
+			//Update the menus
+			self.fillPanel(false);
 			self.notify("change");
 		});
 	}
@@ -148,70 +150,89 @@
 	NASSSearchVisualControl.prototype = $.extend({}, new ObserverPattern());
 	NASSSearchVisualControl.prototype.showPanel = function(which)
 	{
-		if(isDef(which))
-		{
-			var foundPanel = this.jControlPanelEls.filter("." + which);
-			if(foundPanel.length <= 0)
-				throw "Control panel " + which + " not found";
-			this.jCurrPanelEl = foundPanel;
-			this.jControlPanelEls.css("display", "none");
-			this.jCurrPanelEl.css("display", "block");
-			
-			//Fill all the select tags
-			var fillSelect = function(jSelectEl, strArray)
-			{
-				var options = "";
-				var selected = false;
-				$.each(strArray, function(idx, str){
-					options += "<option" + (selected ? "" : " selected=\"selected\"" ) + " value=\"" + str + "\">" + str + "</option>";
-					selected = true;
-				});
-				jSelectEl.html(options);
-			};
-			
-			var self = this;
-			var toFill = this.jCurrPanelEl.find("select");
-			var filled = {};
-			while(toFill.length > 0)
-			{
-				$.each(toFill.splice(0), function(idx, jEl){
-					jEl = $(jEl);
-					var name = jEl.attr("name");
-					var fillData = self.supportedData[name];
-					if(!isDef(fillData))
-						throw "No fill data for select";
-					else
-					{
-						if(Object.prototype.toString.call(fillData) === "[object Array]")
-						{
-							fillSelect(jEl, self.supportedData[name]);
-						}
-						else if(Object.prototype.toString.call(fillData) === "[object Object]")
-						{
-							//Relies on another select tag
-							if(name == "colName" && isDef(filled["dbName"]))
-							{
-								fillSelect(jEl, fillData[filled["dbName"].val()]);
-							}
-							else
-							{
-								throw "Dependant select not informed of other select.";
-							}
-						}
-						else
-						{
-							throw "Unexpected type for select object";
-						}
-					}
-					filled[name] = jEl;
-					toFill = toFill.not(jEl);
-				});
-			}
-		}
-		else
+		
+		if(!isDef(which))
 		{
 			this.jControlPanelEls.css("display", "none");
 			this.jCurrPanelEl = null;
+			return;
+		}
+		
+		var foundPanel = this.jControlPanelEls.filter("." + which);
+		if(foundPanel.length <= 0)
+			throw "Control panel " + which + " not found";
+		this.jCurrPanelEl = foundPanel;
+		this.jControlPanelEls.css("display", "none");
+		this.jCurrPanelEl.css("display", "block");
+		
+		this.fillPanel(true);
+	};
+	//Fill all data inputs
+	//fullFill - Fill all inputs or just update dependant ones?
+	NASSSearchVisualControl.prototype.fillPanel = function(fullFill)
+	{
+		//Fill all the select tags
+		var fillSelect = function(jSelectEl, strArray)
+		{
+			var options = "";
+			var selected = false;
+			$.each(strArray, function(idx, str){
+				options += "<option" + (selected ? "" : " selected=\"selected\"" ) + " value=\"" + str + "\">" + str + "</option>";
+				selected = true;
+			});
+			jSelectEl.html(options);
+		};
+		
+		var self = this;
+		var toFill = this.jCurrPanelEl.find("select");
+		var filled = {};
+		while(toFill.length > 0)
+		{
+			//Fill all the select tags
+			$.each(toFill.splice(0), function(idx, jEl){
+				jEl = $(jEl);
+				var name = jEl.attr("name");
+				var fillData = self.supportedData[name];
+				if(!isDef(fillData))
+					throw "No fill data for select";
+				
+				//Fill Data is Array => Use array to fill select array
+				if(Object.prototype.toString.call(fillData) === "[object Array]")
+				{
+					if(fullFill)
+					{
+						fillSelect(jEl, self.supportedData[name]);
+					}
+					//else - Skip it
+				}
+				//Fill Data is Object (dictionary) => Use key value of some other select to get the array to populate with
+				else if(Object.prototype.toString.call(fillData) === "[object Object]")
+				{
+					//Get the key to use as the index for the object with fill data arrays
+					var fillKey = null;
+					//Relies on another select tag
+					if(name == "colName" && isDef(filled["dbName"]))
+						fillKey = filled["dbName"].val();
+					else
+						throw "Dependant select not informed of other select.";
+					
+					//If fullFill (always fill) or if the current fillKey differs from the one it was filled with, fill it
+					if(fullFill || (isDef(jEl[0].fillKey) && jEl[0].fillKey != fillKey))
+					{
+						fillSelect(jEl, fillData[fillKey]);
+						jEl[0].fillKey = fillKey;
+					}
+					//else - Skip it
+				}
+				else
+				{
+					throw "Unexpected type for select object";
+				}
+				
+				//Mark as filled and record for dependancies
+				filled[name] = jEl;
+				toFill = toFill.not(jEl);
+			});
 		}
 	};
 	NASSSearchVisualControl.prototype.getDataFromPanel = function()
@@ -243,6 +264,9 @@
 				jEl.formVal(term[attr]);
 			}
 		});
+		
+		this.fillPanel(false);
+		this.notify("change");
 	};
 	
 	//Responsible for the observation of the entire application

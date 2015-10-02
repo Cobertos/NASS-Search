@@ -4,6 +4,6 @@
 
 USER INTERFACE
 * Pointer-options fix for <IE11
-* Add the thing to update the other options when one of the select changes (it refills certain dependant select tags)
 * User friendly names (partial support on backend for this already with translateObj, just implement it everywhere)
 * Finish the other ajax calls
+* Delete should select next available term
