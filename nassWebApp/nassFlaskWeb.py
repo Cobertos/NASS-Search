@@ -1,13 +1,29 @@
 import json
 import os
 import mimetypes
+import random
+import sys
    
 from flask import Flask, url_for, redirect
 app = Flask("NASS")
 app.debug = True
 
-import nassGlobal
-import nassSearchTerm
+import ..nassPrefs
+import ..nassAPI.nassGlobal
+import ..nassAPI.nassSearchTerm
+from .nassWorkers import NASSSearchWorker
+
+def jsonToNASSSearch(jsonData):
+    jsonObj = json.loads(jsonData)
+    """translateObj = {
+        "dbName" : {dbData.prettyName : db for db, dbData in prefs["staticDBInfo"].dbs},
+        "colName" : None,
+        "searchValue" : None,
+        "compareFunc" : nassGlobal.prefs["supportedCompareFuncs"]
+    }"""
+    return NASSSearchTerm.fromJSON(jsonObj, translateObj)
+    
+
 
 @app.route('/app/<path:file>')
 def serve(file):
@@ -57,14 +73,7 @@ def init():
     
 @app.route('/api_presearch')
 def presearch():
-    jsonObj = json.loads(flask.request.data)
-    """translateObj = {
-        "dbName" : {dbData.prettyName : db for db, dbData in prefs["staticDBInfo"].dbs},
-        "colName" : None,
-        "searchValue" : None,
-        "compareFunc" : nassGlobal.prefs["supportedCompareFuncs"]
-    }"""
-    searchTerm = NASSSearchTerm.fromJSON(jsonObj, translateObj)
+    searchTerm = jsonToNASSSearch(flask.request.data)
     searchDicts = searchTerm.dictTerms()
     searchLookupDict = {}
     for d in searchDicts:
@@ -107,17 +116,35 @@ def presearch():
                 
     
     return json.dumps(alerts)
+
+workers = []
     
 @app.route('/api_search')
 def search():
+    #Spawn a new thread to search
+    searchTerm = jsonToNASSSearch(flask.request.data)
+    worker = NASSSearchWorker(searchTerm)
     
-
-
-    return 
+    #Put it in the array based on jobId
+    jobId = random.randint(0,sys.maxsize)
+    workers[jobId] = worker
+    return jobId
     
 @app.route('/api_searchPoll')
 def searchPoll():
-    return 'Search Poll'
+    jsonObj = json.loads(flask.request.data)
+    
+    if not (jsonObj["jobId"] in workers):
+        return "JobId does not exist"
+    
+    worker = workers[jsonObj["jobId"]]
+    action = jsonObj["action"]
+    if action == "CANCEL":
+        worker.cancel()
+    
+    return worker.getStatus()
+    
+def searchCancel():
 
 if __name__ == "__main__":
     app.run()
