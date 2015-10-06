@@ -1,8 +1,8 @@
 from enum import Enum
 
-from sas7bdatWrapper import SAS7BDATUtil
-from nassGlobal import prefs, data
-from nassDB import NASSDB
+from .sas7bdatWrapper import SAS7BDATUtil
+from .nassGlobal import prefs, data
+from .nassDB import NASSDB
 
 #Each term is a dictionary with dbName, colName, searchValue, compareFunc
 

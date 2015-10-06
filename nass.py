@@ -1,7 +1,8 @@
 import json
 
-from nassSearchTerm import NASSSearchTerm, NASSSearch
-from nassCase import NASSCase
+import nassPrefs
+from nassAPI.nassSearchTerm import NASSSearchTerm, NASSSearch
+from nassAPI.nassCase import NASSCase
 
 #Go into each file and get column info on each db
 #Present this to user and let them form a search

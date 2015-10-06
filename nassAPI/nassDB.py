@@ -2,8 +2,8 @@ import re
 
 from sas7bdat import SAS7BDAT
 
-from nassGlobal import prefs
-from nassCase import NASSCase
+from .nassGlobal import prefs
+from .nassCase import NASSCase
 
 class NASSDB():
     def __init__(self, data):

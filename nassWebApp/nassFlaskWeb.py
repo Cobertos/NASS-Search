@@ -110,7 +110,10 @@ def presearch():
     
 @app.route('/api_search')
 def search():
-    return 'Search'
+    
+
+
+    return 
     
 @app.route('/api_searchPoll')
 def searchPoll():

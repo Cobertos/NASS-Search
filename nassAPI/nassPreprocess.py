@@ -3,9 +3,9 @@ import os
 import re
 import subprocess
 
-import nassGlobal
-from nassGlobal import prefs, data
-from nassDB import NASSDB
+import .nassGlobal
+from .nassGlobal import prefs, data
+from .nassDB import NASSDB
 
 #Preprocesses the NASSDB folder for everything that's there
 #Currently throws everything into a JSON file pretty printed
@@ -110,13 +110,13 @@ if __name__ == "__main__":
     years = {}
 
     #For every year directory
-    for entry in os.listdir(prefs["rootPath"]):
-        if not os.path.isdir(os.path.join(prefs["rootPath"],entry)) or not re.match('\d{4}', entry, re.I):
+    for entry in os.listdir(prefs["dbPath"]):
+        if not os.path.isdir(os.path.join(prefs["dbPath"],entry)) or not re.match('\d{4}', entry, re.I):
             continue
         
         #Resolve directories in this directory that contain data
         year = entry
-        files = findYearFiles(year, os.path.join(prefs["rootPath"],entry))
+        files = findYearFiles(year, os.path.join(prefs["dbPath"],entry))
         
         if len(files["dbs"]) == 0:
             print("Could not resolve any db files for " + year)
@@ -125,6 +125,6 @@ if __name__ == "__main__":
         years[year] = files
         
     #Output everything as JSON
-    f = open("preprocessDBInfo.json", "w")
+    f = open(prefs["preprocessJSONFile"], "w")
     f.write(json.dumps(years, sort_keys=True, indent=4, separators=(',', ': ')))
     
