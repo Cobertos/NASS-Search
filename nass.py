@@ -1,6 +1,5 @@
 import json
 
-import nassPrefs
 from nassAPI.nassSearchTerm import NASSSearchTerm, NASSSearch
 from nassAPI.nassCase import NASSCase
 

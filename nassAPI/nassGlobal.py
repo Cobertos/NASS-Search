@@ -33,7 +33,48 @@ def startsWith(found, find):
 prefs["supportedCompareFuncs"] = {name : globals()[name] for name in ["stringIn", "equal", "startsWith"]}
 
 #GLOBAL DATA
-data = {}
+_data = {}
+inited = False
+
+#Fake data class to redirect data accesses to _data with some checks
+class dummyData():
+    def nonInitGetItem(self, key):
+        return _data.__getitem__(key)
+
+    def __getitem__(self, key):
+        #Init if not init'd then replace with normal function
+        if not inited:
+            init()
+            self.__getitem__ = self.nonInitGetItem
+        return _data.__getitem__(key)
+    def __setitem__(self, key, item):
+        _data.__setitem__(key, item)
+data = dummyData()
+
+    
+        
+#Allow user to pass custom preferences
+def userPrefs(userPrefs):
+    #They can only update the preferences (or should only update them) when we haven't init'd
+    if inited:
+        raise RuntimeError("NASS has already been inited. User preferences shouldn't be changed")
+    
+    #Join the user prefs over the default prefs
+    prefs.update(userPrefs)
+
+#Init global data
+def init():
+    #GLOBAL DATA
+    #Json info on dbs
+    fstaticDBInfo = open(prefs["staticJSONFile"], "r")
+    _data["staticDBInfo"] = json.loads(fstaticDBInfo.read())
+
+    if not os.path.isfile(prefs["preprocessJSONFile"]):
+        raise RuntimeError("No preprocessDBInfo found! Run the preprocessor first!")
+    else:
+        fpreprocessDBInfo = open(prefs["preprocessJSONFile"],"r")
+        _data["preprocessDBInfo"] = json.loads(fpreprocessDBInfo.read())
+        
 
 #COMMON FUNCTIONALITY
 def userYN(msg):
@@ -45,20 +86,3 @@ def userYN(msg):
             return False
         
         print("Invalid response, please choose y or n")
-
-
-#Allow user to pass custom preferences
-def init(userPrefs):
-    #Join the user prefs over the default prefs
-    prefs.update(userPrefs)
-
-    #GLOBAL DATA
-    #Json info on dbs
-    fstaticDBInfo = open(prefs["staticJSONFile"], "r")
-    data["staticDBInfo"] = json.loads(fstaticDBInfo.read())
-
-    if not os.path.isfile(prefs["preprocessJSONFile"]):
-        raise RuntimeError("No preprocessDBInfo found! Run the preprocessor first!")
-    else:
-        fpreprocessDBInfo = open(prefs["preprocessJSONFile"],"r")
-        data["preprocessDBInfo"] = json.loads(fpreprocessDBInfo.read())

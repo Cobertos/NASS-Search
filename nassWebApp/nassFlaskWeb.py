@@ -8,9 +8,10 @@ from flask import Flask, url_for, redirect
 app = Flask("NASS")
 app.debug = True
 
-import ..nassPrefs
-import ..nassAPI.nassGlobal
-import ..nassAPI.nassSearchTerm
+sys.path.append(os.path.realpath(".."))
+import nassPrefs
+import nassAPI.nassGlobal
+import nassAPI.nassSearchTerm
 from .nassWorkers import NASSSearchWorker
 
 def jsonToNASSSearch(jsonData):
@@ -28,6 +29,7 @@ def jsonToNASSSearch(jsonData):
 @app.route('/app/<path:file>')
 def serve(file):
     path = "./webGui/" + file
+    print(path)
     if(os.path.isfile(path)):
         resp = app.make_response(open(path, "rb").read())
         resp.mimetype = mimetypes.guess_type(file)[0]
@@ -143,8 +145,6 @@ def searchPoll():
         worker.cancel()
     
     return worker.getStatus()
-    
-def searchCancel():
 
 if __name__ == "__main__":
     app.run()
