@@ -1,7 +1,7 @@
 import threading
 
-from ..nassAPI.nassSearchTerm import NASSSearchTerm, NASSSearch
-from ..nassAPI.nassCase import NASSCase
+from nassAPI.nassSearchTerm import NASSSearchTerm, NASSSearch
+from nassAPI.nassCase import NASSCase
 
 class NASSSearchWorker(threading.Thread):
     def __init__(self, search, *args, **kwargs):

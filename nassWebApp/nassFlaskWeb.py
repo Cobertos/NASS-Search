@@ -4,15 +4,19 @@ import mimetypes
 import random
 import sys
    
-from flask import Flask, url_for, redirect
+from flask import Flask, url_for, redirect, abort
 app = Flask("NASS")
 app.debug = True
 
 sys.path.append(os.path.realpath(".."))
-import nassPrefs
-import nassAPI.nassGlobal
-import nassAPI.nassSearchTerm
-from .nassWorkers import NASSSearchWorker
+import nassAPI.nassGlobal as nassGlobal
+import nassAPI.nassSearchTerm as nassSearchTerm
+from nassWorkers import NASSSearchWorker
+
+#NASS redirect
+nassGlobal.updateUserPrefs({
+    "rootPath" : os.path.realpath(".."),
+})
 
 def jsonToNASSSearch(jsonData):
     jsonObj = json.loads(jsonData)
@@ -28,7 +32,7 @@ def jsonToNASSSearch(jsonData):
 
 @app.route('/app/<path:file>')
 def serve(file):
-    path = "./webGui/" + file
+    path = "./webFiles/" + file
     print(path)
     if(os.path.isfile(path)):
         resp = app.make_response(open(path, "rb").read())
