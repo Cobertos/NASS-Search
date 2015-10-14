@@ -12,8 +12,15 @@
 		this.search = new NASSSearch.NASSSearchTerm([], true);
 		if(isDef(searchInit))
 			this.search.terms.push(searchInit);
-		
-		this.blankTerm = blankTerm;
+		//Patch the rootTerm's toJSON to get JSON without the rootTerm
+		var oldToJSON = this.search.toJSON;
+		this.search.toJSON = function()
+		{
+			if(this.terms.length == 0)
+				return "";
+			else
+				return oldToJSON.call(this);
+		}
 		
 		//Patch the rootTerm's toDOM to give it special classes
 		var oldToDOM = this.search.toDOM;
@@ -27,6 +34,8 @@
 			
 			return jThisEl[0];
 		}
+		
+		this.blankTerm = blankTerm;
 		
 		this.jVisualEl = thisGUI.jGUIEl;
 		this.jSelectedEl = null;
@@ -332,10 +341,10 @@
 		searchBuilderControl.subscribe("change", function(){
 			var data = searchBuilderControl.getDataFromPanel();
 			searchBuilderVisual.applyDataToSelected(data);
-			//Do a presearch after a timer
+			//self.doPresearch();
 		});
 		miscControl.subscribe("change", function(){
-			//Do a presearch after a timer
+			//self.doPresearch();
 		});
 		goControl.subscribe("go", function(){
 			this.notify("go"); //Propogate the message
@@ -343,4 +352,25 @@
 	}
 	NASSSearch.SearchBuilder = SearchBuilder;
 	SearchBuilder.prototype = $.extend({}, new ObserverPattern());
+	/*SearchBuilder.prototype.doPresearch = function(fromTimeout)
+	{
+		//Clear the timeout
+		if(isDef(this.presearchTimeout))
+			window.clearTimeout(this.presearchTimeout);
+		
+		//Timeout expired, not a user causing presearch again, react to the data
+		if(fromTimeout === true)
+		{
+			$.ajax("/api_presearch", {method : "GET"})
+			.done(function(data, status, jXHR){
+				console.log(data);
+				//self.goControl.applyAlerts(JSON.parse(data));
+			});
+		}
+		else //Wait another 300ms until timer expires
+		{
+			var func = this.doPresearch.bind(this, true);
+			this.presearchTimeout = window.setTimeout(func, 300); //300ms
+		}
+	};*/
 })(window.NASSSearch = window.NASSSearch || {});
