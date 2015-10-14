@@ -5,7 +5,7 @@
 
 (function(NASSSearch){
 	//The visual search panel
-	function NASSSearchVisual(searchInit, jVisualEl, blankTerm)
+	function SearchBuilderVisual(thisGUI, searchInit, blankTerm)
 	{
 		//A small wrapper around the full search for UI purposes
 		//Becomes a term with one term in it, this term will eventually be stripped off when finalizing the search
@@ -28,7 +28,7 @@
 			return jThisEl[0];
 		}
 		
-		this.jVisualEl = jVisualEl;
+		this.jVisualEl = thisGUI.jGUIEl;
 		this.jSelectedEl = null;
 
 		//Set up all the handlers
@@ -58,9 +58,9 @@
 		
 		this.refresh();
 	}
-	NASSSearch.NASSSearchVisual = NASSSearchVisual;
-	NASSSearchVisual.prototype = $.extend({}, new ObserverPattern());
-	NASSSearchVisual.prototype.getTermType = function(jTermEl)
+	NASSSearch.SearchBuilderVisual = SearchBuilderVisual;
+	SearchBuilderVisual.prototype = $.extend({}, new ObserverPattern());
+	SearchBuilderVisual.prototype.getTermType = function(jTermEl)
 	{
 		if(jTermEl.is(".rootTerm"))
 			return "rootTerm";
@@ -73,7 +73,7 @@
 		else
 			throw "Unidentified term";
 	};
-	NASSSearchVisual.prototype.refresh = function()
+	SearchBuilderVisual.prototype.refresh = function()
 	{	
 		if(!isDef(this.jSelectedEl))
 		{
@@ -94,7 +94,7 @@
 				this.notify("select", this.getTermType(this.jSelectedEl), this.jSelectedEl[0].NASSTerm);
 		}
 	};
-	NASSSearchVisual.prototype.applyDataToSelected = function(data)
+	SearchBuilderVisual.prototype.applyDataToSelected = function(data)
 	{
 		//Data is a dictionary of term attributes (in the dict term or on the term itself) to values
 		var term = this.jSelectedEl[0].NASSTerm;
@@ -110,12 +110,12 @@
 		});
 		this.refresh();
 	};
-	NASSSearchVisual.prototype.addSelected = function()
+	SearchBuilderVisual.prototype.addSelected = function()
 	{
 		this.jSelectedEl[0].NASSTerm.add(this.blankTerm.copy());
 		this.refresh();
 	};
-	NASSSearchVisual.prototype.removeSelected = function()
+	SearchBuilderVisual.prototype.removeSelected = function()
 	{
 		this.jSelectedEl[0].NASSTerm.remove();
 		this.search.prune(false, true); //Only condense things above the first level in this.search
@@ -124,9 +124,10 @@
 	}
 	
 	//The control panel that ties in with the visual search panel
-	function NASSSearchVisualControl(jControlEl, supportedData)
+	function SearchBuilderControl(thisGUI, supportedData)
 	{
 		//Set up the control panels
+		var jControlEl = thisGUI.jGUIEl;
 		this.jControlPanelEls = jControlEl.children();
 		this.jControlPanelEls.css("display", "none");
 		this.jCurrPanelEl = null; //Start with no panel
@@ -146,9 +147,9 @@
 			self.notify("change");
 		});
 	}
-	NASSSearch.NASSSearchVisualControl = NASSSearchVisualControl;
-	NASSSearchVisualControl.prototype = $.extend({}, new ObserverPattern());
-	NASSSearchVisualControl.prototype.showPanel = function(which)
+	NASSSearch.SearchBuilderControl = SearchBuilderControl;
+	SearchBuilderControl.prototype = $.extend({}, new ObserverPattern());
+	SearchBuilderControl.prototype.showPanel = function(which)
 	{
 		
 		if(!isDef(which))
@@ -169,7 +170,7 @@
 	};
 	//Fill all data inputs
 	//fullFill - Fill all inputs or just update dependant ones?
-	NASSSearchVisualControl.prototype.fillPanel = function(fullFill)
+	SearchBuilderControl.prototype.fillPanel = function(fullFill)
 	{
 		//Fill all the select tags
 		var fillSelect = function(jSelectEl, strArray)
@@ -189,7 +190,7 @@
 		while(toFill.length > 0)
 		{
 			//Fill all the select tags
-			$.each(toFill.splice(0), function(idx, jEl){
+			$.each(toFill.slice(), function(idx, jEl){
 				jEl = $(jEl);
 				var name = jEl.attr("name");
 				var fillData = self.supportedData[name];
@@ -235,7 +236,7 @@
 			});
 		}
 	};
-	NASSSearchVisualControl.prototype.getDataFromPanel = function()
+	SearchBuilderControl.prototype.getDataFromPanel = function()
 	{
 		if(!isDef(this.jCurrPanelEl))
 			throw "No current panel to get data from";
@@ -247,7 +248,7 @@
 		});
 		return ret;
 	};
-	NASSSearchVisualControl.prototype.applyTermToPanel = function(term)
+	SearchBuilderControl.prototype.applyTermToPanel = function(term)
 	{
 		if(!isDef(this.jCurrPanelEl))
 			throw "No current panel to apply data to";
@@ -269,34 +270,77 @@
 		this.notify("change");
 	};
 	
-	//Responsible for the observation of the entire application
-	function NASSSearchControl(nassMain, jControlEl, jVisualEl)
+	//The panel that controls all other misc options
+	function SearchMiscControl(thisGUI, supportedData)
 	{
-		//Set up the visual search portion
+		//This is a simple module
+		//It fills selects with default data and otherwise just packages up all data by name
+		//It also looks for the go button
+	}
+	NASSSearch.SearchMiscControl = SearchMiscControl;
+	SearchMiscControl.prototype = $.extend({}, new ObserverPattern());
+	
+	//The panel that has the go button and alerts
+	function SearchGoControl(thisGUI)
+	{
+		//A simple module that notifies on button push
+		//Also responsible for setting the alerts next to the button
+	}
+	NASSSearch.SearchGoControl = SearchGoControl;
+	SearchGoControl.prototype = $.extend({}, new ObserverPattern());
+	
+	
+	//Responsible for the observation of the entire application
+	function SearchBuilder(thisGUI, nassMain)
+	{
+		//Set up the different guis
 		var blankTerm = new NASSSearch.NASSSearchTerm(
 		{"dbName":nassMain.initData["dbName"][0],
 		"colName":nassMain.initData["colName"][nassMain.initData["dbName"][0]][0],
 		"searchValue":"Value",
 		"compareFunc":nassMain.initData["compareFunc"][0]});
-		this.searchBuilderVisual = new NASSSearchVisual(null, jVisualEl, blankTerm);
-		this.searchBuilderPanel = new NASSSearchVisualControl(jControlEl, nassMain.initData);
+		var jEl;
+		//Visual GUI
+		jEl = thisGUI.getChild("builderVisual");
+		this.searchBuilderVisualGUI = new NASSSearch.NASSGUI(jEl, SearchBuilderVisual, null, blankTerm);
+		var searchBuilderVisual = this.searchBuilderVisualGUI.controller;
+		//Control GUI
+		jEl = thisGUI.getChild("builderControl");
+		this.searchBuilderControlGUI = new NASSSearch.NASSGUI(jEl, SearchBuilderControl, nassMain.initData);
+		var searchBuilderControl = this.searchBuilderControlGUI.controller;
+		//Misc GUI
+		jEl = thisGUI.getChild("misc");
+		this.miscControlGUI = new NASSSearch.NASSGUI(jEl, SearchMiscControl, nassMain.initData);
+		var miscControl = this.miscControlGUI.controller;
+		//Go Panel GUI
+		jEl = thisGUI.getChild("go");
+		this.goControlGUI = new NASSSearch.NASSGUI(jEl, SearchGoControl);
+		var goControl = this.goControlGUI.controller;
 		
 		//All the connections
 		var self = this;
-		this.searchBuilderVisual.subscribe("select", function(which, term){
-			self.searchBuilderPanel.showPanel(which + "Panel");
-			self.searchBuilderPanel.applyTermToPanel(term);
+		searchBuilderVisual.subscribe("select", function(which, term){
+			searchBuilderControl.showPanel(which + "Panel");
+			searchBuilderControl.applyTermToPanel(term);
 		});
-		this.searchBuilderPanel.subscribe("add", function(){
-			self.searchBuilderVisual.addSelected();
+		searchBuilderControl.subscribe("add", function(){
+			searchBuilderVisual.addSelected();
 		});
-		this.searchBuilderPanel.subscribe("delete", function(){
-			self.searchBuilderVisual.removeSelected();
+		searchBuilderControl.subscribe("delete", function(){
+			searchBuilderVisual.removeSelected();
 		});
-		this.searchBuilderPanel.subscribe("change", function(){
-			var data = self.searchBuilderPanel.getDataFromPanel();
-			self.searchBuilderVisual.applyDataToSelected(data);
+		searchBuilderControl.subscribe("change", function(){
+			var data = searchBuilderControl.getDataFromPanel();
+			searchBuilderVisual.applyDataToSelected(data);
+			//Do a presearch after a timer
+		});
+		miscControl.subscribe("change", function(){
+			//Do a presearch after a timer
+		});
+		goControl.subscribe("go", function(){
+			this.notify("go"); //Propogate the message
 		});
 	}
-	NASSSearch.NASSSearchControl = NASSSearchControl;
+	NASSSearch.SearchBuilder = SearchBuilder;
+	SearchBuilder.prototype = $.extend({}, new ObserverPattern());
 })(window.NASSSearch = window.NASSSearch || {});

@@ -3,12 +3,15 @@
 (function(NASSSearch){
 	function NASSSearchMain()
 	{
+		//Variables for handling when to init
 		this.isReady = false;
 		this.readys = 0;
 		this.readysNeeded = 2;
 		
+		//Everything else
 		this.initData = null;
-		this.searchGUI = null;
+		this.builderGUI = null;
+		this.resultsGUI = null;
 		
 		//Perform the init query
 		var self = this;
@@ -27,7 +30,16 @@
 		if(this.readys < this.readysNeeded)
 			return;
 		
-		this.searchGUI = new NASSSearch.NASSSearchControl(this, $("#searchControl"), $("#searchVisual"));
+		//Create all the sub gui systems
+		var controller;
+		this.builderGUI = new NASSSearch.NASSGUI($("#searchBuilder"), NASSSearch.SearchBuilder, this);
+		this.builderGUI.controller.subscribe("go", function(){
+			//TODO: API call to perform the search
+			//TODO: Get the JobID and switch guis
+		});
+		
+		//this.resultsGUI = new NASSSearch.NASSGUI($("#searchResults"), NASSSearch.SearchResults, this);
+		
 		
 		this.isReady = true;
 	};

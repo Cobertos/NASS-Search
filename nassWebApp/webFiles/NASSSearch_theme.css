@@ -44,7 +44,7 @@ main
 	max-width:1200px;
 	min-width:600px;
 }
-div.stylePanel
+.stylePanel
 {
 	padding:7px;
 	background-color: #FFFFFF;
@@ -54,18 +54,14 @@ div.stylePanel
 	box-shadow: 9px 8px 0px 0px rgba(84,81,71,0.16);
 }
 
-div.stylePanelMargins
+.stylePanelMargins
 {
 	margin-top:20px;
 }
 
 
 /*The visual search box*/
-#searchContainer
-{
-	
-}
-#searchControl
+.js-gui-builderControl
 {
 	box-sizing: border-box;
 	margin:0;
@@ -74,11 +70,11 @@ div.stylePanelMargins
 	margin-right:20px;
 	min-height:340px;
 }
-#searchControl > div > div /*Form elements*/
+.js-gui-builderControl > div > div /*Form elements*/
 {
 	margin-bottom:5px;
 }
-#searchVisual
+.js-gui-builderVisual
 {
 	padding:0;
 	margin:0;
@@ -87,7 +83,7 @@ div.stylePanelMargins
 	min-height:340px;
 }
 
-#searchVisual div.term:not(.rootTerm)
+.js-gui-builderVisual div.term:not(.rootTerm)
 {
 	position:relative;
 	display:inline-block;
@@ -98,45 +94,45 @@ div.stylePanelMargins
 	background-color: #D0D0D0;
 	cursor: pointer;
 }
-#searchVisual div.term.rootTerm
+.js-gui-builderVisual div.term.rootTerm
 {
 	min-height:340px;
 }
-#searchVisual div.term.rootTerm.emptyListTerm
+.js-gui-builderVisual div.term.rootTerm.emptyListTerm
 {
 	background-image:url("./clickToStart.png");
 	background-repeat:no-repeat;
 	background-position: 50% 50%;
 }
-#searchVisual div.term.hover
+.js-gui-builderVisual div.term.hover
 {
 	background-color: #F5F5F5;
 }
-#searchVisual div.term.dbTerm:not(.rootTerm)
+.js-gui-builderVisual div.term.dbTerm:not(.rootTerm)
 {
 	padding-top:0.8em;
 }
-#searchVisual div.term.listTerm:not(.rootTerm)
+.js-gui-builderVisual div.term.listTerm:not(.rootTerm)
 {
 	padding:8px;
 }
-#searchVisual div.term.join
+.js-gui-builderVisual div.term.join
 {
 	border: 0;
 }
-#searchVisual div.term.not
+.js-gui-builderVisual div.term.not
 {
 	background-color:#F2CCCC;
 }
-#searchVisual div.term.not.hover
+.js-gui-builderVisual div.term.not.hover
 {
 	background-color:#F6D0D0;
 }
-#searchVisual div.term.focus, #searchVisual div.term.focus.not, #searchVisual div.term.focus.not.hover
+.js-gui-builderVisual div.term.focus, .js-gui-builderVisual div.term.focus.not, .js-gui-builderVisual div.term.focus.not.hover
 {
 	background-color:#EEEED0;
 }
-#searchVisual div.term > div.uprLeft
+.js-gui-builderVisual div.term > div.uprLeft
 {
 	pointer-events:none;
 	position:absolute;

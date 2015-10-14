@@ -55,9 +55,7 @@ function ObserverPattern()
 }
 ObserverPattern.prototype.notify = function(which)
 {
-	var args = [];
-	for(var i=1; i<arguments.length; i++)
-		args[i-1] = arguments[i];
+	var args = Array.prototype.slice.call(arguments, 1);
 	
 	if(!isDef(this.subscribers[which]))
 		return;
@@ -299,4 +297,31 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 			stringifier.terms = this.terms;
 		return JSON.stringify(stringifier);
 	};
+	
+	//GUI container with a controller class that holds other gui elements
+	//Each gui element has data-guiname
+	//Controller constructors (controllerCls) should be of the form (GUIObj, vararg...)
+	function NASSGUI(jEl, controllerCls)
+	{
+		var vararg = Array.prototype.slice.call(arguments, 2);
+		
+		this.jGUIEl = jEl;
+		//Manually creates controller object and call constructor w/ vararg as params
+		var newController = Object.create(controllerCls.prototype);
+		vararg.unshift(this); //Add the GUI object to the start of the list
+		this.controller = controllerCls.apply(newController, vararg) || newController;
+		
+		this.jGUIEl[0].nassGUI = this;
+	}
+	NASSSearch.NASSGUI = NASSGUI;
+	NASSGUI.prototype.getChild = function(name)
+	{
+		return this.jGUIEl.find("*.js-gui-" + name);
+	};
+	NASSGUI.prototype.getGUIChild = function(name)
+	{
+		return this.getChild(name)[0].nassGUI;
+	};
+	
+	
 })(window.NASSSearch = window.NASSSearch || {});
