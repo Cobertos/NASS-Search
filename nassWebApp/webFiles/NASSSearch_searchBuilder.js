@@ -341,10 +341,10 @@
 		searchBuilderControl.subscribe("change", function(){
 			var data = searchBuilderControl.getDataFromPanel();
 			searchBuilderVisual.applyDataToSelected(data);
-			//self.doPresearch();
+			self.doPresearch();
 		});
 		miscControl.subscribe("change", function(){
-			//self.doPresearch();
+			self.doPresearch();
 		});
 		goControl.subscribe("go", function(){
 			this.notify("go"); //Propogate the message
@@ -352,7 +352,7 @@
 	}
 	NASSSearch.SearchBuilder = SearchBuilder;
 	SearchBuilder.prototype = $.extend({}, new ObserverPattern());
-	/*SearchBuilder.prototype.doPresearch = function(fromTimeout)
+	SearchBuilder.prototype.doPresearch = function(fromTimeout)
 	{
 		//Clear the timeout
 		if(isDef(this.presearchTimeout))
@@ -361,10 +361,20 @@
 		//Timeout expired, not a user causing presearch again, react to the data
 		if(fromTimeout === true)
 		{
-			$.ajax("/api_presearch", {method : "GET"})
+			var self = this;
+			var jsonData = this.searchBuilderVisualGUI.controller.search.toJSON();
+			if(jsonData === "")
+				return; //No blank sends
+			
+			$.ajax("/api_presearch", {
+				contentType : "application/json; charset=UTF-8",
+				method : "POST",
+				data : jsonData,
+				processData : false
+			})
 			.done(function(data, status, jXHR){
 				console.log(data);
-				//self.goControl.applyAlerts(JSON.parse(data));
+				self.goControlGUI.controller.applyAlerts(JSON.parse(data));
 			});
 		}
 		else //Wait another 300ms until timer expires
@@ -372,5 +382,5 @@
 			var func = this.doPresearch.bind(this, true);
 			this.presearchTimeout = window.setTimeout(func, 300); //300ms
 		}
-	};*/
+	};
 })(window.NASSSearch = window.NASSSearch || {});

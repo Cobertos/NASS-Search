@@ -3,8 +3,9 @@ import os
 import mimetypes
 import random
 import sys
+import codecs
    
-from flask import Flask, url_for, redirect, abort
+from flask import Flask, url_for, redirect, abort, request
 app = Flask("NASS")
 app.debug = True
 
@@ -26,7 +27,7 @@ def jsonToNASSSearch(jsonData):
         "searchValue" : None,
         "compareFunc" : nassGlobal.prefs["supportedCompareFuncs"]
     }"""
-    return NASSSearchTerm.fromJSON(jsonObj, translateObj)
+    return nassSearchTerm.NASSSearchTerm.fromJSON(jsonObj, translateObj)
     
 
 
@@ -77,9 +78,10 @@ def init():
     
     return json.dumps(supported, cls=SetEncoder)
     
-@app.route('/api_presearch')
+@app.route('/api_presearch', methods=["POST"])
 def presearch():
-    searchTerm = jsonToNASSSearch(flask.request.data)
+    requestData = codecs.decode(request.data, "utf_8");
+    searchTerm = jsonToNASSSearch(requestData)
     searchDicts = searchTerm.dictTerms()
     searchLookupDict = {}
     for d in searchDicts:
@@ -125,10 +127,11 @@ def presearch():
 
 workers = []
     
-@app.route('/api_search')
+@app.route('/api_search', methods=["POST"])
 def search():
     #Spawn a new thread to search
-    searchTerm = jsonToNASSSearch(flask.request.data)
+    requestData = codecs.decode(request.data, "utf_8");
+    searchTerm = jsonToNASSSearch(requestData)
     worker = NASSSearchWorker(searchTerm)
     
     #Put it in the array based on jobId
@@ -136,9 +139,10 @@ def search():
     workers[jobId] = worker
     return jobId
     
-@app.route('/api_searchPoll')
+@app.route('/api_searchPoll', methods=["POST"])
 def searchPoll():
-    jsonObj = json.loads(flask.request.data)
+    requestData = codecs.decode(request.data, "utf_8");
+    jsonObj = json.loads(requestData)
     
     if not (jsonObj["jobId"] in workers):
         return "JobId does not exist"
