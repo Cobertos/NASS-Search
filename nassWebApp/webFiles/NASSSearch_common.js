@@ -292,10 +292,10 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 	{
 		var stringifier = {"inverse" : this.inverse};
 		if(is(this.terms, "obj"))
-			stringifier.terms = $.extendSelective({}, this.terms, ["dbName", "colName", "searchValue", "matchFunc"]);
+			stringifier.terms = $.extendSelective({}, this.terms, ["dbName", "colName", "searchValue", "compareFunc"]);
 		else if(is(this.terms, "array"))
 			stringifier.terms = this.terms;
-		return JSON.stringify(stringifier);
+		return stringifier;
 	};
 	
 	//GUI container with a controller class that holds other gui elements

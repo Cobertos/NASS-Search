@@ -142,6 +142,34 @@ main
 	font-weight:bold;
 }
 
+/*Search alerts*/
+.searchAlerts > .searchAlert
+{
+	position:relative;
+	background-color:#575757;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+	border-radius:5px;
+	border:1px solid #232323;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-size:0.9em;
+	padding:5px 10px;
+}
+.searchAlerts > .searchAlert > .searchAlertHover
+{
+	visibility:hidden;
+	position:absolute;
+	left:0;
+	top:0;
+	background-color:#575757;
+	cursor:pointer;
+	color:#FFFFFF;
+	font-size:0.9em;
+	padding:5px;
+}
+
 /*Buttons*/
 .goButton, .cancelButton {
 	background-color:#44c767;

@@ -18,6 +18,8 @@
 		{
 			if(this.terms.length == 0)
 				return "";
+			if(this.terms.length == 1)
+				return this.terms[0].toJSON();
 			else
 				return oldToJSON.call(this);
 		}
@@ -282,21 +284,63 @@
 	//The panel that controls all other misc options
 	function SearchMiscControl(thisGUI, supportedData)
 	{
-		//This is a simple module
-		//It fills selects with default data and otherwise just packages up all data by name
-		//It also looks for the go button
+		this.supportedData = supportedData;
+		this.fillPanel();
+		
+		//Handlers
+		var self = this;
+		thisGUI.jGUIEl.on("change keyup", "select, input:not(input[type='button'])", function(e){
+			self.notify("change");
+		});
 	}
 	NASSSearch.SearchMiscControl = SearchMiscControl;
 	SearchMiscControl.prototype = $.extend({}, new ObserverPattern());
+	SearchMiscControl.prototype.fillPanel = function()
+	{
+		//Fill the panel with the year data
+	};
+	SearchMiscControl.prototype.getDataFromPanel = function()
+	{
+		//Wrap up all the inputs in here and put them in a dict
+	};
 	
 	//The panel that has the go button and alerts
 	function SearchGoControl(thisGUI)
 	{
-		//A simple module that notifies on button push
-		//Also responsible for setting the alerts next to the button
+		var jGoEl = thisGUI.jGUIEl.children(".goButton");
+		this.jAlertsEl = thisGUI.jGUIEl.children(".searchAlerts");
+		
+		//Handlers
+		//Go handler
+		var self = this;
+		jGoEl.on("click", function(e){
+			self.notify("go");
+		});
+		//Search alert hover handlers
+		this.jAlertsEl.on("mouseenter", ".searchAlert", function(e){
+			var hoverChild = $(this).children(".searchAlertHover").first();
+			if(isDef(hoverChild))
+				hoverChild.css("visibility", "visible");
+		});
+		this.jAlertsEl.on("mouseleave", ".searchAlert", function(e){
+			var hoverChild = $(this).children(".searchAlertHover").first();
+			if(isDef(hoverChild))
+				hoverChild.css("visibility", "hidden");
+		});
 	}
 	NASSSearch.SearchGoControl = SearchGoControl;
 	SearchGoControl.prototype = $.extend({}, new ObserverPattern());
+	SearchGoControl.prototype.setAlerts = function(alerts)
+	{
+		var alertString = "";
+		$.each(alerts, function(idx, alert){
+			alertString += "<div class=\"searchAlert alert-" + alert["type"] + "\">"
+				+ alert["shortName"]
+				+ "<div class=\"searchAlertHover\">" + alert["name"] + ": <br>" + alert["description"] + "</div>"
+				+ "</div>";
+		});
+		this.jAlertsEl.html(alertString);
+	};
 	
 	
 	//Responsible for the observation of the entire application
@@ -362,7 +406,7 @@
 		if(fromTimeout === true)
 		{
 			var self = this;
-			var jsonData = this.searchBuilderVisualGUI.controller.search.toJSON();
+			var jsonData = JSON.stringify(this.searchBuilderVisualGUI.controller.search);
 			if(jsonData === "")
 				return; //No blank sends
 			
@@ -373,8 +417,7 @@
 				processData : false
 			})
 			.done(function(data, status, jXHR){
-				console.log(data);
-				self.goControlGUI.controller.applyAlerts(JSON.parse(data));
+				self.goControlGUI.controller.setAlerts(JSON.parse(data));
 			});
 		}
 		else //Wait another 300ms until timer expires

@@ -21,12 +21,12 @@ nassGlobal.updateUserPrefs({
 
 def jsonToNASSSearch(jsonData):
     jsonObj = json.loads(jsonData)
-    """translateObj = {
-        "dbName" : {dbData.prettyName : db for db, dbData in prefs["staticDBInfo"].dbs},
+    translateObj = {
+        "dbName" : None, #{dbData.prettyName : db for db, dbData in prefs["staticDBInfo"].dbs},
         "colName" : None,
         "searchValue" : None,
         "compareFunc" : nassGlobal.prefs["supportedCompareFuncs"]
-    }"""
+    }
     return nassSearchTerm.NASSSearchTerm.fromJSON(jsonObj, translateObj)
     
 
@@ -34,7 +34,6 @@ def jsonToNASSSearch(jsonData):
 @app.route('/app/<path:file>')
 def serve(file):
     path = "./webFiles/" + file
-    print(path)
     if(os.path.isfile(path)):
         resp = app.make_response(open(path, "rb").read())
         resp.mimetype = mimetypes.guess_type(file)[0]
@@ -89,7 +88,7 @@ def presearch():
             if not k in searchLookupDict:
                 searchLookupDict[k] = set()
             searchLookupDict[k].add(v)
-    for k, v in searchLookupDict:
+    for k, v in searchLookupDict.items():
         searchLookupDict[k] = list(v)
     
     
@@ -103,7 +102,8 @@ def presearch():
             if not db in yearData["dbs"].keys():
                 alerts.append({
                     "name" : "Year " + year + " excluded",
-                    "shortName" : "YEAR " + year + " EXCL",
+                    "shortName" : year + " EXCL",
+                    "type" : "exclusion",
                     "description" : "The year " + year + " does not contain an entry for database " + db + " (which is in your search terms) and so year " + year + " will be excluded."
                 })
                 break
@@ -113,7 +113,8 @@ def presearch():
                 if not col in yearData["dbs"][db]:
                     alerts.append({
                         "name" : "Year " + year + " excluded",
-                        "shortName" : "YEAR " + year + " EXCL",
+                        "shortName" : year + " EXCL",
+                        "type" : "exclusion",
                         "description" : "The year " + year + " contains database " + db + " but does not have column " + col + " and so will be excluded."
                     })
                     shouldBreak = True
