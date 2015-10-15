@@ -403,7 +403,7 @@
 			self.doPresearch();
 		});
 		goControl.subscribe("go", function(){
-			this.notify("go"); //Propogate the message
+			self.notify("go"); //Propogate the message
 		});
 	}
 	NASSSearch.SearchBuilder = SearchBuilder;
