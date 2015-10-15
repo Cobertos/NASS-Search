@@ -4,6 +4,19 @@
 
 
 (function(NASSSearch){
+	//Fill select tags
+	function fillSelect(jSelectEl, strArray)
+	{
+		var options = "";
+		var selected = false;
+		$.each(strArray, function(idx, str){
+			options += "<option" + (selected ? "" : " selected=\"selected\"" ) + " value=\"" + str + "\">" + str + "</option>";
+			selected = true;
+		});
+		jSelectEl.html(options);
+	};
+	
+	
 	//The visual search panel
 	function SearchBuilderVisual(thisGUI, searchInit, blankTerm)
 	{
@@ -183,18 +196,6 @@
 	//fullFill - Fill all inputs or just update dependant ones?
 	SearchBuilderControl.prototype.fillPanel = function(fullFill)
 	{
-		//Fill all the select tags
-		var fillSelect = function(jSelectEl, strArray)
-		{
-			var options = "";
-			var selected = false;
-			$.each(strArray, function(idx, str){
-				options += "<option" + (selected ? "" : " selected=\"selected\"" ) + " value=\"" + str + "\">" + str + "</option>";
-				selected = true;
-			});
-			jSelectEl.html(options);
-		};
-		
 		var self = this;
 		var toFill = this.jCurrPanelEl.find("select");
 		var filled = {};
@@ -284,6 +285,7 @@
 	//The panel that controls all other misc options
 	function SearchMiscControl(thisGUI, supportedData)
 	{
+		this.jGUIEl = thisGUI.jGUIEl;
 		this.supportedData = supportedData;
 		this.fillPanel();
 		
@@ -297,11 +299,20 @@
 	SearchMiscControl.prototype = $.extend({}, new ObserverPattern());
 	SearchMiscControl.prototype.fillPanel = function()
 	{
-		//Fill the panel with the year data
+		var toFill = this.jGUIEl.children("select");
+		var self = this;
+		$.each(toFill, function(idx, el){
+			fillSelect($(el), self.supportedData["year"]);
+		});
 	};
 	SearchMiscControl.prototype.getDataFromPanel = function()
 	{
-		//Wrap up all the inputs in here and put them in a dict
+		var ret = {};
+		$.each(this.jCurrPanelEl.find("select, input").not("input[type='button']"), function(idx, jEl){
+			jEl = $(jEl);
+			ret[jEl.attr("name")] = jEl.formVal();
+		});
+		return ret;
 	};
 	
 	//The panel that has the go button and alerts

@@ -323,5 +323,4 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 		return this.getChild(name)[0].nassGUI;
 	};
 	
-	
 })(window.NASSSearch = window.NASSSearch || {});

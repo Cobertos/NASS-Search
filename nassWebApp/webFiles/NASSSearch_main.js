@@ -3,6 +3,19 @@
 (function(NASSSearch){
 	function NASSSearchMain()
 	{
+		//Get URLParameters
+		this.urlParams = {};
+		(window.onpopstate = function () {
+			var match,
+				search = /([^&=]+)=?([^&]*)/g,
+				decode = function (s) { return decodeURIComponent(s.replace(/\+/g, " ")); },
+				query  = window.location.search.substring(1);
+
+			while (match = search.exec(query))
+			   this.urlParams[decode(match[1])] = decode(match[2]);
+		})();
+		
+		
 		//Variables for handling when to init
 		this.isReady = false;
 		this.readys = 0;
@@ -31,15 +44,27 @@
 			return;
 		
 		//Create all the sub gui systems
-		var controller;
-		this.builderGUI = new NASSSearch.NASSGUI($("#searchBuilder"), NASSSearch.SearchBuilder, this);
-		this.builderGUI.controller.subscribe("go", function(){
+		this.topLevelGUIs = {};
+		this.topLevelGUIs["builderGUI"] = new NASSSearch.NASSGUI($("#searchBuilder"), NASSSearch.SearchBuilder, this);
+		this.topLevelGUIs["builderGUI"].controller.subscribe("go", function(){
 			//TODO: API call to perform the search
 			//TODO: Get the JobID and switch guis
 		});
 		
-		//this.resultsGUI = new NASSSearch.NASSGUI($("#searchResults"), NASSSearch.SearchResults, this);
+		this.topLevelGUIs["resultsGUI"] = new NASSSearch.NASSGUI($("#searchResults"), NASSSearch.SearchResults, this);
 		
+		//Setup the guis
+		var self = this;
+		$.each(this.topLevelGUIs, function(guiName, gui){
+			var disp = "none";
+			if((guiName == "resultsGUI" && isDef(self.urlParams["jobID"]))
+				|| guiName == "builderGUI")
+				disp = "block";
+			
+			gui.jGUIEl.css({
+				"display":disp
+			});
+		});
 		
 		this.isReady = true;
 	};
