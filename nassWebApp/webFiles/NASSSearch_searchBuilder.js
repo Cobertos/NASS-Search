@@ -30,7 +30,7 @@
 		this.search.toJSON = function()
 		{
 			if(this.terms.length == 0)
-				return "";
+				return {};
 			if(this.terms.length == 1)
 				return this.terms[0].toJSON();
 			else
@@ -147,6 +147,7 @@
 		this.refresh();
 	}
 	
+	
 	//The control panel that ties in with the visual search panel
 	function SearchBuilderControl(thisGUI, supportedData)
 	{
@@ -165,7 +166,7 @@
 		jControlEl.on("click", "input[type='button'][name='deleteButton']", function(e){
 			self.notify("delete");
 		});
-		jControlEl.on("change keyup", "select, input:not(input[type='button'])", function(e){
+		jControlEl.on("change keyup click", "select, input", function(e){
 			//Update the menus
 			self.fillPanel(false);
 			self.notify("change");
@@ -291,7 +292,7 @@
 		
 		//Handlers
 		var self = this;
-		thisGUI.jGUIEl.on("change keyup", "select, input:not(input[type='button'])", function(e){
+		thisGUI.jGUIEl.on("change keyup click", "select, input", function(e){
 			self.notify("change");
 		});
 	}
@@ -300,9 +301,9 @@
 	SearchMiscControl.prototype.fillPanel = function()
 	{
 		var toFill = this.jGUIEl.children("select");
-		var self = this;
+		var yearData = this.supportedData["year"].sort();
 		$.each(toFill, function(idx, el){
-			fillSelect($(el), self.supportedData["year"]);
+			fillSelect($(el), yearData);
 		});
 	};
 	SearchMiscControl.prototype.getDataFromPanel = function()
@@ -418,8 +419,18 @@
 		{
 			var self = this;
 			var jsonData = JSON.stringify(this.searchBuilderVisualGUI.controller.search);
-			if(jsonData === "")
+			if(jsonData == "{}")
+			{
+				//Can't send nothing
+				var alert = {
+					"name":"Invalid input data",
+					"shortName":"INVALID",
+					"type":"invaliddata",
+					"description":"There must be at least one search parameter"
+				};
+				self.goControlGUI.controller.setAlerts([alert]);
 				return; //No blank sends
+			}
 			
 			$.ajax("/api_presearch", {
 				contentType : "application/json; charset=UTF-8",

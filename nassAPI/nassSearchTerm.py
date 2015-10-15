@@ -189,9 +189,11 @@ class NASSSearchTerm():
     def dictTerms(self):
         if isinstance(self.terms, dict):
             return [self.terms]
-        elif isinstance(self.terms, list):
+        elif isinstance(self.terms, tuple):
             retObj = []
             for term in self.terms:
+                if not isinstance(term, NASSSearchTerm):
+                    continue
                 moreTerms = term.dictTerms()
                 retObj.extend(moreTerms)
                     
@@ -232,7 +234,7 @@ class NASSSearchTerm():
             for term in jsonObj["terms"]:
                 arrObj.append(cls.fromJSON(term))
             
-            return NASSSearchTerm(arrObj, inverse=jsonObj["inverse"])
+            return NASSSearchTerm(tuple(arrObj), inverse=jsonObj["inverse"])
     
     #Another import/export format for terms, this one specifically easy to write in python
     #Instead of forming a search term with dicts, tuples and the above classes, or JSON, a term can be formed from
