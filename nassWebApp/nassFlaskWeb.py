@@ -110,7 +110,7 @@ def presearch():
                 
             #ALERT TYPE: Column not in database of a given year
             for col in searchLookupDict["colName"]:
-                if not col in yearData["dbs"][db]:
+                if not col in yearData["dbs"][db]["columnNames"]:
                     alerts.append({
                         "name" : "Year " + year + " excluded",
                         "shortName" : year + " EXCL",
