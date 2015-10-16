@@ -25,18 +25,6 @@
 		this.search = new NASSSearch.NASSSearchTerm([], true);
 		if(isDef(searchInit))
 			this.search.terms.push(searchInit);
-		//Patch the rootTerm's toJSON to get JSON without the rootTerm
-		var oldToJSON = this.search.toJSON;
-		this.search.toJSON = function()
-		{
-			if(this.terms.length == 0)
-				return {};
-			if(this.terms.length == 1)
-				return this.terms[0].toJSON();
-			else
-				return oldToJSON.call(this);
-		}
-		
 		//Patch the rootTerm's toDOM to give it special classes
 		var oldToDOM = this.search.toDOM;
 		this.search.toDOM = function()
@@ -145,7 +133,36 @@
 		this.search.prune(false, true); //Only condense things above the first level in this.search
 		this.jSelectedEl = null;
 		this.refresh();
-	}
+	};
+	SearchBuilderVisual.prototype.getSearch = function()
+	{
+		//A dummy search object with only toJSON and toDOM
+		var dummySearch = {
+			"search" : this.search,
+			"toJSON" : function()
+			{
+				if(this.search.terms.length == 0)
+					return {};
+				else if(this.search.terms.length == 1)
+					return  this.search.terms[0].toJSON();
+				else
+					return this.search.toJSON();
+			},
+			"toDOM" : function()
+			{
+				if(this.search.terms.length == 0)
+				{
+					return "";
+				}
+				else
+				{
+					var dom = this.search.toDOM();
+					return $(dom).children()[0];
+				}
+			}
+		};
+		return dummySearch;
+	};
 	
 	
 	//The control panel that ties in with the visual search panel
@@ -403,7 +420,7 @@
 			self.doPresearch();
 		});
 		goControl.subscribe("go", function(){
-			self.notify("go"); //Propogate the message
+			self.notify("go", self.searchBuilderVisualGUI.controller.getSearch()); //Propogate the message
 		});
 	}
 	NASSSearch.SearchBuilder = SearchBuilder;
@@ -418,7 +435,7 @@
 		if(fromTimeout === true)
 		{
 			var self = this;
-			var jsonData = JSON.stringify(this.searchBuilderVisualGUI.controller.search);
+			var jsonData = JSON.stringify(this.searchBuilderVisualGUI.controller.getSearch());
 			if(jsonData == "{}")
 			{
 				//Can't send nothing

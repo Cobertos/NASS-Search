@@ -126,32 +126,36 @@ def presearch():
     
     return json.dumps(alerts)
 
-workers = []
+workers = {}
     
 @app.route('/api_search', methods=["POST"])
 def search():
     #Spawn a new thread to search
-    requestData = codecs.decode(request.data, "utf_8");
+    requestData = codecs.decode(request.data, "utf_8")
     searchTerm = jsonToNASSSearch(requestData)
     worker = NASSSearchWorker(searchTerm)
     
     #Put it in the array based on jobId
-    jobId = random.randint(0,sys.maxsize)
+    jobId = str(random.randint(0,sys.maxsize))
     workers[jobId] = worker
-    return jobId
+    
+    jsonOut = {}
+    jsonOut["jobid"] = jobId
+    return json.dumps(jsonOut)
     
 @app.route('/api_searchPoll', methods=["POST"])
 def searchPoll():
-    requestData = codecs.decode(request.data, "utf_8");
+    requestData = codecs.decode(request.data, "utf_8")
     jsonObj = json.loads(requestData)
     
-    if not (jsonObj["jobId"] in workers):
+    if not (jsonObj["jobid"] in workers):
         return "JobId does not exist"
     
-    worker = workers[jsonObj["jobId"]]
-    action = jsonObj["action"]
-    if action == "CANCEL":
-        worker.cancel()
+    worker = workers[jsonObj["jobid"]]
+    if "action" in jsonObj:
+        action = jsonObj["action"]
+        if action == "CANCEL":
+            worker.cancel()
     
     return worker.getStatus()
 

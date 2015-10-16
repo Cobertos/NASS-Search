@@ -6,7 +6,7 @@ from nassAPI.nassCase import NASSCase
 class NASSSearchWorker(threading.Thread):
     def __init__(self, search, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.search = search
+        self.search = NASSSearch(search)
         self.status = "NEW"
         
     def run(self):

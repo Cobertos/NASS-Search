@@ -5,16 +5,6 @@
 	{
 		//Get URLParameters
 		this.urlParams = {};
-		(window.onpopstate = function () {
-			var match,
-				search = /([^&=]+)=?([^&]*)/g,
-				decode = function (s) { return decodeURIComponent(s.replace(/\+/g, " ")); },
-				query  = window.location.search.substring(1);
-
-			while (match = search.exec(query))
-			   this.urlParams[decode(match[1])] = decode(match[2]);
-		})();
-		
 		
 		//Variables for handling when to init
 		this.isReady = false;
@@ -42,31 +32,58 @@
 		this.readys += 1;
 		if(this.readys < this.readysNeeded)
 			return;
+		//FULLY READY
+		//Get Url parameters
+		var match,
+			search = /([^&=]+)=?([^&]*)/g,
+			decode = function (s) { return decodeURIComponent(s.replace(/\+/g, " ")); },
+			query  = window.location.search.substring(1);
+
+		while (match = search.exec(query))
+		   this.urlParams[decode(match[1])] = decode(match[2]);
 		
 		//Create all the sub gui systems
+		var self = this;
 		this.topLevelGUIs = {};
 		this.topLevelGUIs["builderGUI"] = new NASSSearch.NASSGUI($("#searchBuilder"), NASSSearch.SearchBuilder, this);
-		this.topLevelGUIs["builderGUI"].controller.subscribe("go", function(){
-			//TODO: API call to perform the search
-			//TODO: Get the JobID and switch guis
+		this.topLevelGUIs["builderGUI"].controller.subscribe("go", function(search){
+			self.initData["search"] = search;
+			$.ajax("/api_search", {
+				contentType : "application/json; charset=UTF-8",
+				method : "POST",
+				data : JSON.stringify(search),
+				processData : false
+			})
+			.done(function(data, status, jXHR){
+				var json = JSON.parse(data);
+				console.log(json);
+				self.urlParams["jobid"] = json["jobid"];
+				self.setGUI();
+			});
 		});
 		
 		this.topLevelGUIs["resultsGUI"] = new NASSSearch.NASSGUI($("#searchResults"), NASSSearch.SearchResults, this);
 		
-		//Setup the guis
+		this.isReady = true;
+		
+		this.setGUI();
+	};
+	NASSSearchMain.prototype.setGUI = function(which)
+	{
 		var self = this;
 		$.each(this.topLevelGUIs, function(guiName, gui){
 			var disp = "none";
-			if((guiName == "resultsGUI" && isDef(self.urlParams["jobID"]))
-				|| guiName == "builderGUI")
+			if((guiName == "resultsGUI" && isDef(self.urlParams["jobid"]))
+				|| guiName == "builderGUI" && !isDef(self.urlParams["jobid"]))
 				disp = "block";
 			
 			gui.jGUIEl.css({
 				"display":disp
 			});
+			
+			if(isDef(gui.controller.init) && disp == "block")
+				gui.controller.init();
 		});
-		
-		this.isReady = true;
 	};
 	
 })(window.NASSSearch = window.NASSSearch || {});
