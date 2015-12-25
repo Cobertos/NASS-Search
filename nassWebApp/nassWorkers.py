@@ -1,3 +1,10 @@
+"""
+Worker thread for the web application
+
+A worker that performs a search and responds with its status to provide to an
+overseeing user
+"""
+
 import threading
 
 from nassAPI.nassSearchTerm import NASSSearchTerm, NASSSearch

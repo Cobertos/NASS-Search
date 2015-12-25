@@ -1,10 +1,17 @@
+"""
+NASS Search Tool Global Preferences and Data
+
+This module holds the global preferences and data structures. All prefs & data
+should be read from nassGlobal.prefs and nassGlobal.data.
+"""
+
 import os.path
 import json
 
-#DummyDict - An object that will init nassGlobal when accessed
+#DummyReadOnlyDict - A dict that once read will call init() but only once across all instances
 #Only implements __getitem__ so should be read only
-inited = False
-class DummyDict():
+class DummyReadOnlyDict():
+    triggered = False
     def __init__(self, target):
         self.target = target
     
@@ -12,14 +19,21 @@ class DummyDict():
         return self.target[key]
         
     def __getitem__(self, key):
-        #Init if not init'd then replace with normal function
-        if not inited:
+        #Multiple dicts might be accessed at different times
+        #Only trigger if none before
+        if not DummyReadOnlyDict.triggered:
             init()
+            DummyReadOnlyDict.triggered = True
+        #Replace this function with the noCheck version if a trigger has occured previously
+        if DummyReadOnlyDict.triggered:
             self.__getitem__ = self.noCheck__getitem__
         return self.target[key]
     
 #PassThroughDict - Dictionary that will __getitem__ the values of a different dict if they exist
-#The point is to fill this dict with desired values calulated from other dict values but being able to have 
+#Finalization will join the two dicts, overwriting everything in self with keys from target
+#This allows for values in one dict to be used if they exist in calculating new values (specifically in init())
+#but to also allow the programmer to give a different value in place of these calculated values which will
+#be applied in the finalization.
 class PassThroughDict(dict):
     def __init__(self, target, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -38,25 +52,38 @@ class PassThroughDict(dict):
 #Default configuration
 #USER PREFERENCES
 userPrefs = {}
-_prefs = PassThroughDict(userPrefs)
-prefs = DummyDict(_prefs)
+_prefs = PassThroughDict(userPrefs) #The final values for preferences that userPrefs will be joined over top of once an init() occurs
+prefs = DummyReadOnlyDict(_prefs) #Where all API values are read from (if one is read, we trigger an init())
 
 #GLOBAL DATA
 _data = {}
-data = DummyDict(_data) 
+data = DummyReadOnlyDict(_data) 
         
-#Allow user to pass custom preferences
 def updateUserPrefs(moreUserPrefs):
+    """
+    Overwrites global API prefs (only before init() is called)
+
+    Takes a dict with key-value pairs representing the prefs to be overridden
+    and the value to override with
+    """
+    
     #They can only update the preferences (or should only update them) when we haven't init'd
-    if inited:
+    if DummyReadOnlyDict.triggered:
         raise RuntimeError("NASS has already been inited. User preferences shouldn't be changed now")
     
-    #Join the user prefs over the default prefs
+    #Join the user prefs overwriting the default prefs
     userPrefs.update(moreUserPrefs)
 
-#Init global data
 def init():
-    #USER PREFERENCES
+    """
+    Inits the global state of prefs and data
+
+    Called automatically when either nassGlobal.prefs and nassGlobal.data is
+    accessed. Calculates all default preferences, substituting those specified
+    by the programmer in updateUserPrefs when necessary (stored in userPrefs dict)
+    """
+
+    #DEFAULT USER PREFERENCES
     #Folders and files configuration
     _prefs["rootPath"] = os.path.realpath(".")
     _prefs["dbPath"] = os.path.join(_prefs["rootPath"], "nassDB")

@@ -33,6 +33,12 @@ def jsonToNASSSearch(jsonData):
 
 @app.route('/app/<path:file>')
 def serve(file):
+    """
+    Serves a file to the web user
+    
+    Be warned this should not be used on a public server
+    """
+    
     path = "./webFiles/" + file
     if(os.path.isfile(path)):
         resp = app.make_response(open(path, "rb").read())
@@ -47,6 +53,10 @@ def root():
 
 @app.route('/api_init')
 def init():
+    """
+    Ajax response for init request. Responds with all supported operations and data
+    """
+
     #SUPPORTED VALUES FOR OPTIONS
     supported = {}
     
@@ -79,6 +89,14 @@ def init():
     
 @app.route('/api_presearch', methods=["POST"])
 def presearch():
+    """
+    Ajax response for a presearch request
+    
+    A presearch takes a search and returns and alerts that may occur given the
+    data it is searching. An example alert would be that a given year is excluded
+    and the reason that we need to exclude that year from the search
+    """
+
     requestData = codecs.decode(request.data, "utf_8");
     searchTerm = jsonToNASSSearch(requestData)
     searchDicts = searchTerm.dictTerms()
@@ -130,10 +148,17 @@ workers = {}
     
 @app.route('/api_search', methods=["POST"])
 def search():
+    """
+    Ajax response to a search request
+    
+    Responds to a request to search with the job id of the newly created search
+    """
+
     #Spawn a new thread to search
     requestData = codecs.decode(request.data, "utf_8")
     searchTerm = jsonToNASSSearch(requestData)
     worker = NASSSearchWorker(searchTerm)
+    worker.start()
     
     #Put it in the array based on jobId
     jobId = str(random.randint(0,sys.maxsize))
@@ -145,6 +170,12 @@ def search():
     
 @app.route('/api_searchPoll', methods=["POST"])
 def searchPoll():
+    """
+    Ajax response to search poll
+    
+    Responds to a request to poll for data on a given search
+    """
+
     requestData = codecs.decode(request.data, "utf_8")
     jsonObj = json.loads(requestData)
     
