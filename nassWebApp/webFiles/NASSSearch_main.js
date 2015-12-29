@@ -16,7 +16,7 @@
 		this.builderGUI = null;
 		this.resultsGUI = null;
 		
-		//Perform the init query
+		//READY 1 - Init query has finished
 		var self = this;
 		$.ajax("/api_init", {method : "GET"})
 			.done(function(data, status, jXHR){
@@ -24,6 +24,7 @@
 				self.ready();
 			});
 		
+		//READY 2 - When DOM is ready
 		$(function(){self.ready();});
 	}
 	NASSSearch.NASSSearchMain = NASSSearchMain;
@@ -64,7 +65,19 @@
 		
 		this.topLevelGUIs["resultsGUI"] = new NASSSearch.NASSGUI($("#searchResults"), NASSSearch.SearchResults, this);
 		
+		//Set the correct gui for display
+		if(isDef(self.urlParams["jobid"]))
+		{
+			this.setGUI("resultsGUI");
+		}
+		else
+		{
+			this.setGUI("builderGUI");
+		}
+		
 		this.isReady = true;
+		
+		
 		
 		this.setGUI();
 	};
@@ -73,16 +86,17 @@
 		var self = this;
 		$.each(this.topLevelGUIs, function(guiName, gui){
 			var disp = "none";
-			if((guiName == "resultsGUI" && isDef(self.urlParams["jobid"]))
-				|| guiName == "builderGUI" && !isDef(self.urlParams["jobid"]))
+			if(guiName == which)
 				disp = "block";
 			
 			gui.jGUIEl.css({
 				"display":disp
 			});
 			
-			if(isDef(gui.controller.init) && disp == "block")
-				gui.controller.init();
+			if(disp == "block" && isDef(gui.controller.display))
+				gui.controller.display();
+			else(isDef(gui.controller.undisplay()))
+				gui.controller.undisplay();
 		});
 	};
 	

@@ -7,7 +7,7 @@
 		this.nassMain = nassMain;
 	}
 	NASSSearch.SearchResults = SearchResults;
-	SearchResults.prototype.init = function()
+	SearchResults.prototype.display = function()
 	{
 		//Fill the summary
 		var summaryDOM = $.parseHTML("<div>JobID: " + this.nassMain.urlParams["jobid"] + "</div>")[0];

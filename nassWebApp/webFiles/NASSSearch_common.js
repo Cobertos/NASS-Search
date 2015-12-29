@@ -298,26 +298,30 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 		return stringifier;
 	};
 	
-	//GUI container with a controller class that holds other gui elements
-	//Each gui element has data-guiname
-	//Controller constructors (controllerCls) should be of the form (GUIObj, vararg...)
+	//GUI class that takes care of pairing up DOM elements with instances of corresponding classes
+	//Each GUI element in the system has a class of js-gui-___ used in searching for sub gui components to make more controllers on (in the implementations)
+	//Controller constructors (controllerCls) should be of the form (NASSGUIObj, vararg...)
 	function NASSGUI(jEl, controllerCls)
 	{
+		//Get args to send to the constructor of new controller
 		var vararg = Array.prototype.slice.call(arguments, 2);
+		vararg.unshift(this); //Add the GUI object to the start of the list
 		
-		this.jGUIEl = jEl;
 		//Manually creates controller object and call constructor w/ vararg as params
 		var newController = Object.create(controllerCls.prototype);
-		vararg.unshift(this); //Add the GUI object to the start of the list
-		this.controller = controllerCls.apply(newController, vararg) || newController;
+		this.controller = controllerCls.apply(newController, vararg);
 		
-		this.jGUIEl[0].nassGUI = this;
+		//Create all the linkages
+		this.jGUIEl = jEl; //Access the jQuery el from this obj
+		this.jGUIEl[0].nassGUI = this; //Access the GUI object from the DOM el
 	}
 	NASSSearch.NASSGUI = NASSGUI;
+	//Gets the jQuery object for a child DOM element participating in the system with a given name
 	NASSGUI.prototype.getChild = function(name)
 	{
 		return this.jGUIEl.find("*.js-gui-" + name);
 	};
+	//Gets the NASS GUI object for a child DOM element participating in the system with a given name
 	NASSGUI.prototype.getGUIChild = function(name)
 	{
 		return this.getChild(name)[0].nassGUI;
