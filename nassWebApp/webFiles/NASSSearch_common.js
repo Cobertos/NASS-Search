@@ -2,86 +2,8 @@
 
 //Responsible for all the common functionality shared between a bunch of the js files
 
-//Common functions outside namespace
-function isDef(o)
-{
-	return !(typeof o === "undefined" || o === null);
-}
-//A jQuery addition to get the value of some form input
-//Most return value,
-//Checkbox should return true/false if checked or not
-$.prototype.formVal = function(setTo)
-{
-	if(this.length > 1)
-	{
-		if(isDef(setTo))
-		{
-			$.each(this, function(idx,el){el.v(setTo);});
-			return null;
-		}
-		else
-		{
-			return this.first().formVal(setTo);
-		}
-	}
-	else if(this.is("input[type='checkbox']"))
-	{
-		if(isDef(setTo))
-			return this.prop("checked", setTo);
-		else
-			return this.prop("checked");
-	}
-	else
-	{
-		if(isDef(setTo))
-			return this.val(setTo);
-		else
-			return this.val();
-	}
-};
-$.extendSelective = function(extendee, extender, filter)
-{
-	for(var key in extender)
-		if(filter.indexOf(key) != -1 && extender.hasOwnProperty(key))
-			extendee[key] = extender[key];
-		
-	return extendee;
-};
-
-//Observer model
-function ObserverPattern()
-{
-	this.subscribers = {};
-}
-ObserverPattern.prototype.notify = function(which)
-{
-	var args = Array.prototype.slice.call(arguments, 1);
-	
-	if(!isDef(this.subscribers[which]))
-		return;
-	$.each(this.subscribers[which], function(idx, how){
-		how.apply(null, args);
-	});
-};
-ObserverPattern.prototype.subscribe = function(which, how)
-{
-	if(!isDef(this.subscribers[which]))
-		this.subscribers[which] = [];
-	this.subscribers[which].push(how);
-};
-ObserverPattern.prototype.unsubscribe = function(which, how)
-{
-	if(!isDef(this.subscribers[which]))
-		return;
-	var where = this.subscribers[which].indexOf(how);
-	if(where <= -1)
-		return;
-	this.subscribers[which].splice(where,1);
-};
-
-//NASSSearch related namespace stuff
-//Includes the terms and joins similar to the python backend with some added functionality
 (function(NASSSearch){
+	//Quick test function just for NASSSearch terms and joins
 	function is(o, which)
 	{
 		switch(which)
@@ -296,35 +218,6 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 		else if(is(this.terms, "array"))
 			stringifier.terms = this.terms;
 		return stringifier;
-	};
-	
-	//GUI class that takes care of pairing up DOM elements with instances of corresponding classes
-	//Each GUI element in the system has a class of js-gui-___ used in searching for sub gui components to make more controllers on (in the implementations)
-	//Controller constructors (controllerCls) should be of the form (NASSGUIObj, vararg...)
-	function NASSGUI(jEl, controllerCls)
-	{
-		//Get args to send to the constructor of new controller
-		var vararg = Array.prototype.slice.call(arguments, 2);
-		vararg.unshift(this); //Add the GUI object to the start of the list
-		
-		//Manually creates controller object and call constructor w/ vararg as params
-		var newController = Object.create(controllerCls.prototype);
-		this.controller = controllerCls.apply(newController, vararg);
-		
-		//Create all the linkages
-		this.jGUIEl = jEl; //Access the jQuery el from this obj
-		this.jGUIEl[0].nassGUI = this; //Access the GUI object from the DOM el
-	}
-	NASSSearch.NASSGUI = NASSGUI;
-	//Gets the jQuery object for a child DOM element participating in the system with a given name
-	NASSGUI.prototype.getChild = function(name)
-	{
-		return this.jGUIEl.find("*.js-gui-" + name);
-	};
-	//Gets the NASS GUI object for a child DOM element participating in the system with a given name
-	NASSGUI.prototype.getGUIChild = function(name)
-	{
-		return this.getChild(name)[0].nassGUI;
 	};
 	
 })(window.NASSSearch = window.NASSSearch || {});
