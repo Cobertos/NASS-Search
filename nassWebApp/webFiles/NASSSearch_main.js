@@ -30,6 +30,7 @@
 	NASSSearch.NASSSearchMain = NASSSearchMain;
 	NASSSearchMain.prototype.ready = function()
 	{
+		//CHECK READYS
 		this.readys += 1;
 		if(this.readys < this.readysNeeded)
 			return;
@@ -46,8 +47,19 @@
 		//Create all the sub gui systems
 		var self = this;
 		this.topLevelGUIs = {};
-		this.topLevelGUIs["builderGUI"] = new NASSSearch.NASSGUI($("#searchBuilder"), NASSSearch.SearchBuilder, this);
-		this.topLevelGUIs["builderGUI"].controller.subscribe("go", function(search){
+		
+		//Init data on GUIfy elements
+		$("#searchBuilder")[0].GUIfyController = [this];
+		$("#searchResults")[0].GUIfyController = [this];
+		
+		//GUIfy the document
+		GUIfyDocument();
+		
+		//Everything's ready, so grab the controllers
+		this.topLevelGUIs["builderGUI"] = $("#searchBuilder")[0].GUIfyController;
+		this.topLevelGUIs["resultsGUI"] = $("#searchResults")[0].GUIfyController;
+		//Subscribe to all events
+		this.topLevelGUIs["builderGUI"].subscribe("go", function(search){
 			self.initData["search"] = search;
 			$.ajax("/api_search", {
 				contentType : "application/json; charset=UTF-8",
@@ -59,44 +71,20 @@
 				var json = JSON.parse(data);
 				console.log(json);
 				self.urlParams["jobid"] = json["jobid"];
-				self.setGUI();
+				self.setGUI("resultsGUI");
 			});
 		});
 		
-		this.topLevelGUIs["resultsGUI"] = new NASSSearch.NASSGUI($("#searchResults"), NASSSearch.SearchResults, this);
-		
 		//Set the correct gui for display
 		if(isDef(self.urlParams["jobid"]))
-		{
 			this.setGUI("resultsGUI");
-		}
 		else
-		{
 			this.setGUI("builderGUI");
-		}
-		
-		this.isReady = true;
-		
-		
-		
-		this.setGUI();
 	};
 	NASSSearchMain.prototype.setGUI = function(which)
 	{
-		var self = this;
 		$.each(this.topLevelGUIs, function(guiName, gui){
-			var disp = "none";
-			if(guiName == which)
-				disp = "block";
-			
-			gui.jGUIEl.css({
-				"display":disp
-			});
-			
-			if(disp == "block" && isDef(gui.controller.display))
-				gui.controller.display();
-			else(isDef(gui.controller.undisplay()))
-				gui.controller.undisplay();
+			gui.display(guiName == which);
 		});
 	};
 	

@@ -1,9 +1,8 @@
 "use strict";
 (function(NASSSearch){
 	
-	function SearchResults(thisGUI, nassMain)
+	function SearchResults(nassMain)
 	{
-		this.thisGUI = thisGUI;
 		this.nassMain = nassMain;
 	}
 	NASSSearch.SearchResults = SearchResults;
@@ -12,7 +11,7 @@
 		//Fill the summary
 		var summaryDOM = $.parseHTML("<div>JobID: " + this.nassMain.urlParams["jobid"] + "</div>")[0];
 		summaryDOM.appendChild(this.nassMain.initData["search"].toDOM());
-		this.thisGUI.getChild("summary").html(summaryDOM);
+		this.GUIfyElement.children("summary").html(summaryDOM);
 		
 		//Begin to poll
 		this.pollInterval = window.setInterval(this.poll.bind(this), 2000);
@@ -27,7 +26,7 @@
 			processData : false
 		})
 		.done(function(data, status, jXHR){
-			self.thisGUI.getChild("progress").children(".statusField").first().html(data);
+			self.GUIfyElement.children("*[data-guify-name=progress]").children(".statusField").first().html(data);
 		});
 	};
 	

@@ -38,7 +38,7 @@ document.nassMain = new NASSSearch.NASSSearchMain();
 	-->
 	<div id="searchBuilder" class="stylePanelMargins">
 		<div>
-			<div class="js-gui-builderControl stylePanel">
+			<div data-guify-name="builderControl" class="stylePanel">
 				<div class="dbTermPanel">
 					<div>Not: <input type="checkbox" name="inverse"></div>
 					<div>Database: <select name="dbName"></select></div>
@@ -65,11 +65,11 @@ document.nassMain = new NASSSearch.NASSSearchMain();
 					<input type="button" name="addButton" value="Add Term"><br>
 				</div>
 			</div>
-			<div class="js-gui-builderVisual stylePanel">
+			<div data-guify-name="builderVisual" class="stylePanel">
 				<!--User builds search with javascript/jQuery here-->
 			</div>
 		</div>
-		<div class="js-gui-misc stylePanel stylePanelMargins">
+		<div data-guify-name="misc" class="stylePanel stylePanelMargins">
 			Year Range: <select name="yearRangeStart">
 				<option></option>
 				<option></option>
@@ -79,7 +79,7 @@ document.nassMain = new NASSSearch.NASSSearchMain();
 				<option></option>
 				</select>
 		</div>
-		<div class="js-gui-go stylePanel stylePanelMargins">
+		<div data-guify-name="go" class="stylePanel stylePanelMargins">
 			<div class="searchAlerts"></div>
 			<div class="goButton">Go</div>
 		</div>
@@ -88,15 +88,15 @@ document.nassMain = new NASSSearch.NASSSearchMain();
 	Handles all the progress and output of the searching
 	-->
 	<div id="searchResults">
-		<div class="js-gui-summary stylePanel stylePanelMargins">
+		<div data-guify-name="summary" class="stylePanel stylePanelMargins">
 			Search jobId, time made, etc<br>
 			Search Visual<br>
 			Search params
 		</div>
-		<div class="js-gui-progress stylePanel stylePanelMargins">
+		<div data-guify-name="progress" class="stylePanel stylePanelMargins">
 			<div class="statusField">Status: </div><div class="cancelButton">Cancel</div>
 		</div>
-		<div class="js-gui-results stylePanel stylePanelMargins">
+		<div data-guify-name="results" class="stylePanel stylePanelMargins">
 			<table border="0">
 				<tr>
 					<td>Case #</td>
