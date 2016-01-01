@@ -71,7 +71,6 @@
 		this.refresh();
 	}
 	NASSSearch.SearchBuilderVisual = SearchBuilderVisual;
-	SearchBuilderVisual.prototype = $.extend({}, new ObserverPattern());
 	SearchBuilderVisual = GUIfyClass(SearchBuilderVisual, "builderVisual");
 	SearchBuilderVisual.prototype.getTermType = function(jTermEl)
 	{
@@ -191,7 +190,6 @@
 		});
 	}
 	NASSSearch.SearchBuilderControl = SearchBuilderControl;
-	SearchBuilderControl.prototype = $.extend({}, new ObserverPattern());
 	SearchBuilderControl = GUIfyClass(SearchBuilderControl, "builderControl");
 	SearchBuilderControl.prototype.showPanel = function(which)
 	{
@@ -311,12 +309,11 @@
 		
 		//Handlers
 		var self = this;
-		thisGUI.jGUIEl.on("change keyup click", "select, input", function(e){
+		this.GUIfyElement.on("change keyup click", "select, input", function(e){
 			self.notify("change");
 		});
 	}
 	NASSSearch.SearchMiscControl = SearchMiscControl;
-	SearchMiscControl.prototype = $.extend({}, new ObserverPattern());
 	SearchMiscControl = GUIfyClass(SearchMiscControl, "misc");
 	SearchMiscControl.prototype.fillPanel = function()
 	{
@@ -361,7 +358,6 @@
 		});
 	}
 	NASSSearch.SearchGoControl = SearchGoControl;
-	SearchGoControl.prototype = $.extend({}, new ObserverPattern());
 	SearchGoControl = GUIfyClass(SearchGoControl, "go");
 	SearchGoControl.prototype.setAlerts = function(alerts)
 	{
@@ -377,7 +373,7 @@
 	
 	
 	//Responsible for the observation of the entire application
-	function SearchBuilder(thisGUI, nassMain)
+	function SearchBuilder(nassMain)
 	{
 		//Set up the different guis
 		var blankTerm = new NASSSearch.NASSSearchTerm(
@@ -392,43 +388,40 @@
 		//this.children("go")[0].GUIfyController = []; //Needs no init data
 		
 		//On ready, subscribe to all the child controllers
+		var self = this;
 		this.subscribe("GUIfy_onReady", function(){
-			//All the connections
-			var self = this;
-			
 			//Visual Builder
-			var searchBuilderVisual = this.children("builderVisual")[0];
-			searchBuilderVisual.subscribe("select", function(which, term){
-				searchBuilderControl.showPanel(which + "Panel");
-				searchBuilderControl.applyTermToPanel(term);
+			self.searchBuilderVisual = self.children("builderVisual")[0];
+			self.searchBuilderVisual.subscribe("select", function(which, term){
+				self.searchBuilderControl.showPanel(which + "Panel");
+				self.searchBuilderControl.applyTermToPanel(term);
 			});
 			//Builder Control
-			var searchBuilderControl = this.children("builderControl")[0];
-			searchBuilderControl.subscribe("add", function(){
-				searchBuilderVisual.addSelected();
+			self.searchBuilderControl = self.children("builderControl")[0];
+			self.searchBuilderControl.subscribe("add", function(){
+				self.searchBuilderVisual.addSelected();
 			});
-			searchBuilderControl.subscribe("delete", function(){
-				searchBuilderVisual.removeSelected();
+			self.searchBuilderControl.subscribe("delete", function(){
+				self.searchBuilderVisual.removeSelected();
 			});
-			searchBuilderControl.subscribe("change", function(){
-				var data = searchBuilderControl.getDataFromPanel();
-				searchBuilderVisual.applyDataToSelected(data);
+			self.searchBuilderControl.subscribe("change", function(){
+				var data = self.searchBuilderControl.getDataFromPanel();
+				self.searchBuilderVisual.applyDataToSelected(data);
 				self.doPresearch();
 			});
 			//Misc
-			var miscControl = this.children("misc")[0];
-			miscControl.subscribe("change", function(){
+			self.miscControl = self.children("misc")[0];
+			self.miscControl.subscribe("change", function(){
 				self.doPresearch();
 			});
 			//Go and alerts
-			var goControl = this.children("go")[0];
-			goControl.subscribe("go", function(){
-				self.notify("go", self.searchBuilderVisualGUI.controller.getSearch()); //Propogate the message
+			self.goControl = self.children("go")[0];
+			self.goControl.subscribe("go", function(){
+				self.notify("go", self.searchBuilderVisual.getSearch()); //Propogate the message
 			});
 		});
 	}
 	NASSSearch.SearchBuilder = SearchBuilder;
-	SearchBuilder.prototype = $.extend({}, new ObserverPattern());
 	SearchBuilder = GUIfyClass(SearchBuilder, "searchBuilder");
 	SearchBuilder.prototype.doPresearch = function(fromTimeout)
 	{
@@ -440,7 +433,7 @@
 		if(fromTimeout === true)
 		{
 			var self = this;
-			var jsonData = JSON.stringify(this.searchBuilderVisualGUI.controller.getSearch());
+			var jsonData = JSON.stringify(this.searchBuilderVisual.getSearch());
 			if(jsonData == "{}")
 			{
 				//Can't send nothing
@@ -450,7 +443,7 @@
 					"type":"invaliddata",
 					"description":"There must be at least one search parameter"
 				};
-				self.goControlGUI.controller.setAlerts([alert]);
+				self.goControl.setAlerts([alert]);
 				return; //No blank sends
 			}
 			
@@ -461,7 +454,7 @@
 				processData : false
 			})
 			.done(function(data, status, jXHR){
-				self.goControlGUI.controller.setAlerts(JSON.parse(data));
+				self.goControl.setAlerts(JSON.parse(data));
 			});
 		}
 		else //Wait another 300ms until timer expires

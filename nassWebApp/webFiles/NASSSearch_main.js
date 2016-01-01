@@ -84,7 +84,7 @@
 	NASSSearchMain.prototype.setGUI = function(which)
 	{
 		$.each(this.topLevelGUIs, function(guiName, gui){
-			gui.display(guiName == which);
+			gui.display(guiName === which);
 		});
 	};
 	

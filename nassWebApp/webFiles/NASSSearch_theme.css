@@ -61,7 +61,11 @@ main
 
 
 /*The visual search box*/
-.js-gui-builderControl
+[data-guify-name]
+{
+	display:none;
+}
+[data-guify-name=builderControl]
 {
 	box-sizing: border-box;
 	margin:0;
@@ -70,11 +74,11 @@ main
 	margin-right:20px;
 	min-height:340px;
 }
-.js-gui-builderControl > div > div /*Form elements*/
+[data-guify-name=builderControl] > div > div /*Form elements*/
 {
 	margin-bottom:5px;
 }
-.js-gui-builderVisual
+[data-guify-name=builderVisual]
 {
 	padding:0;
 	margin:0;
@@ -83,7 +87,7 @@ main
 	min-height:340px;
 }
 
-.js-gui-builderVisual div.term:not(.rootTerm)
+[data-guify-name=builderVisual] div.term:not(.rootTerm)
 {
 	position:relative;
 	display:inline-block;
@@ -94,45 +98,45 @@ main
 	background-color: #D0D0D0;
 	cursor: pointer;
 }
-.js-gui-builderVisual div.term.rootTerm
+[data-guify-name=builderVisual] div.term.rootTerm
 {
 	min-height:340px;
 }
-.js-gui-builderVisual div.term.rootTerm.emptyListTerm
+[data-guify-name=builderVisual] div.term.rootTerm.emptyListTerm
 {
 	background-image:url("./clickToStart.png");
 	background-repeat:no-repeat;
 	background-position: 50% 50%;
 }
-.js-gui-builderVisual div.term.hover
+[data-guify-name=builderVisual] div.term.hover
 {
 	background-color: #F5F5F5;
 }
-.js-gui-builderVisual div.term.dbTerm:not(.rootTerm)
+[data-guify-name=builderVisual] div.term.dbTerm:not(.rootTerm)
 {
 	padding-top:0.8em;
 }
-.js-gui-builderVisual div.term.listTerm:not(.rootTerm)
+[data-guify-name=builderVisual] div.term.listTerm:not(.rootTerm)
 {
 	padding:8px;
 }
-.js-gui-builderVisual div.term.join
+[data-guify-name=builderVisual] div.term.join
 {
 	border: 0;
 }
-.js-gui-builderVisual div.term.not
+[data-guify-name=builderVisual] div.term.not
 {
 	background-color:#F2CCCC;
 }
-.js-gui-builderVisual div.term.not.hover
+[data-guify-name=builderVisual] div.term.not.hover
 {
 	background-color:#F6D0D0;
 }
-.js-gui-builderVisual div.term.focus, .js-gui-builderVisual div.term.focus.not, .js-gui-builderVisual div.term.focus.not.hover
+[data-guify-name=builderVisual] div.term.focus, .js-gui-builderVisual div.term.focus.not, .js-gui-builderVisual div.term.focus.not.hover
 {
 	background-color:#EEEED0;
 }
-.js-gui-builderVisual div.term > div.uprLeft
+[data-guify-name=builderVisual] div.term > div.uprLeft
 {
 	pointer-events:none;
 	position:absolute;

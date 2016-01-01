@@ -16,7 +16,7 @@ $.prototype.formVal = function(setTo)
 	{
 		if(isDef(setTo))
 		{
-			$.each(this, function(idx,el){el.formVal(setTo);});
+			this.jEach(function(idx,jEl){jEl.formVal(setTo);});
 			return null;
 		}
 		else
@@ -38,6 +38,11 @@ $.prototype.formVal = function(setTo)
 		else
 			return this.val();
 	}
+};
+//Calls each with every element as a jQuery object
+$.prototype.jEach = function(func)
+{
+	this.each(function(idx, el){func(idx,$(el));});
 };
 //Extend properties from extender to extendee if keys exist in filter
 $.extendSelective = function(extendee, extender, filter)
@@ -84,18 +89,17 @@ ObserverPattern.prototype.unsubscribe = function(which, how)
 //GUIfy - Managing DOM elements and javascript controllers, (like Angular.js controllers w/o any MVC, b/c we don't do any M)
 //Automatically resolves all these based on a data-guify-name = "____" where ____ is the registered name of the controller
 
-GUIfy = {};
+window.GUIfy = {};
 //COMMON INHERITED FUNCTIONALITY
 GUIfy.objProto = {};
-$.extend(GUIfy.objProto, new ObserverPattern()); //Requires observer pattern
+$.extend(GUIfy.objProto, ObserverPattern.prototype); //Requires observer pattern
 //Gets the jQuery array for all GUIfy child DOM element with a given name
 GUIfy.objProto.childrenEls = function(name)
 {
 	var foundEls = [];
-	$.each(this.GUIfyChildren, function(idx,jEl){
-		jEl = $(jEl);
-		if(jEl.attr("data-guify-name") === name)
-			foundEls.push(jEl);
+	$.each(this.GUIfyChildren, function(idx,el){
+		if($(el).attr("data-guify-name") === name)
+			foundEls.push(el);
 	});
 	return $(foundEls);
 };
@@ -118,38 +122,38 @@ GUIfy.objProto.display = function(disp)
 	if(!this.GUIfyIsReady)
 		throw("Cannot perform action: Children controllers not ready");
 	
+	$.each(this.GUIfyChildren, function(idx,el){
+		el.GUIfyController.display(disp);
+	});
+	
 	this.GUIfyElement.css("display", (disp ? "block" : "none"));
 	this.notify("GUIfy_onDisplay", disp);
-	$.each(this.GUIfyChildren, function(idx,el){
-		el.GUIfyController.notify("GUIfy_onDisplay");
-	});
 };
 
 //A GUIfy object can be created two ways
-//Automatic: 
+//Automatic: DOM element names are matched up with registered controllers
+//Manual: A GUIfy controller can be created on an object passing the element, the parent GUIfy element, and children GUIfy elements
+//Both allow for a variable amount of arguments to be passed to the controller constructor
+//In manual mode, this is as straight forward as passing the arguments like normal after the element, parent element, and child elements
+//In automatic mode it's hard, default arguments can be provided to be passed to all controllers of a given kind
+//Also element specific arguments can be created as an array on the element under .GUIfyController (where the controller object will end up)
+//This can be done in the constructor of the GUIfy object for it's children. The elements will be present under childrenEls but the controllers
+//   themselves will not be present under children yet. Once the GUIfy_onReady event is fired will they be available (see observer pattern)
 
-//First solve the tree for GUIfy objects, get all children parents
-//Then solve the tree for GUIfy
-//Constructor - 
+//Auto mode requires the calling of GUIfyDocument(). This will solve for all children and parent elements and begin construction of all
+//   valid GUIfy elements.
 
-
-//Auto: The name is matched up with the registered name of a controller. It is given default arguments except those substituted by specific functions before ready
-//Manual: The element is passed to the constructor of the controller and is given arguments there. Ready is called right after the constructor with those args
-//In both cases, ready is the constructor. It helps because in the auto mode, we can be assured all children have been created and also that all args are set for creation
-
-
-//Takes a class and turns it into a GUIfy class by adding extras to it's prototype and wrapping its constructor with a new function
-//oldCls should have a constructor of the form (jEl, ...) where ... is any variable amount of arguments
+//GUIfyClass takes a class and makes it into a GUIfy class
+//This is done by wrapping its constructor with a new class creation function (which it returns)
+//and by combining the old classes members with the new class creation function's prototype
+//oldCls is the old class with a constructor with 0 to vararg arguments
 //elClsName is the name of the dom objects this controller will be applied to. Null will not apply it to anything (manual controller application)
-//defaultArgs are the args sent as the vararg to the constructor. This can be overriden in auto mode by specifying specifically before GUIfy OR 
+//defaultArgs are the args sent as the vararg to the constructor. This can be overriden in auto mode by specifying specifically before GUIfy (see modes above)
 //Example usage: function MyGUINewController(){}; MyNewGUIController = GUIfyClass(MyNewGUIController);
 GUIfy.clsCallList = {};
 function GUIfyClass(oldCls, elClsName, defaultArgs)
 {
-	//Add functionality of GUIfy object
-	$.extend(oldCls.prototype, GUIfy.objProto);
-	
-	//Wrap around its constructor with our own
+	//Wrap a new constructor around the old one
 	var newCls = function(jEl, jParentEl, jChildrenEls) //...vararg
 	{	
 		//Get args to send to the constructor of new controller
@@ -165,36 +169,38 @@ function GUIfyClass(oldCls, elClsName, defaultArgs)
 		{
 			//Replace any missing vararg with specific args if
 			if(isDef(jEl[0].GUIfyController) //Specific args exist (test 1)
-				&& Object.prototype.toString.call(o) === "[object Array]") //Specific args exist (test 2, make sure it's an array)
+				&& Object.prototype.toString.call(jEl[0].GUIfyController) === "[object Array]") //Specific args exist (test 2, make sure it's an array)
 			{
 				appendDiff(vararg, jEl[0].GUIfyController);
 			}
 			//Replace any missing vararg with default args if
-			if(isDef(GUIfy.clsList[elClsName]) //Default args exist (test 1)
-				&& GUIfy.clsList[elClsName].length > 0) //Length > 0 (test 2)
+			if(isDef(GUIfy.clsCallList[elClsName]["args"]) //Default args exist (test 1)
+				&& GUIfy.clsCallList[elClsName]["args"].length > 0) //Length > 0 (test 2)
 			{
-				appendDiff(vararg, GUIfy.clsList[elClsName]);
+				appendDiff(vararg, GUIfy.clsCallList[elClsName]["args"]);
 			}
 		}
 		
 		//Manually creates controller object and call constructor w/ vararg as params
-		var newController = Object.create(oldCls.prototype);
+		var newController = Object.create(newCls.prototype);
+		ObserverPattern.apply(newController); //Super class constructor call
 		newController.GUIfyElement = jEl; //Access the jQuery el from the controller
 		newController.GUIfyChildren = jChildrenEls;
 		newController.GUIfyParent = jParentEl;
-		newController = oldCls.apply(newController, vararg);
-		
 		newController.GUIfyIsReady = false;
-		newController.subscribe("GUIfy_onReady", function onReady(){
-			newController.GUIfyIsReady = true;
-			newController.unsubscribe("GUIfy_onReady", onReady);
-		});
+		oldCls.apply(newController, vararg);
 		
 		//Create linkage between the DOM element and the new controller
 		jEl[0].GUIfyController = newController; //Access the controller from dom element
-	}
+		
+		return newController; //This is the new object
+	};
 	
-	GUIfy.clsList[elClsName] = {
+	//Add all prototypes
+	$.extend(newCls.prototype, GUIfy.objProto);
+	$.extend(newCls.prototype, oldCls.prototype);
+	
+	GUIfy.clsCallList[elClsName] = {
 		"cls" : newCls,
 		"args" : defaultArgs
 	};
@@ -227,7 +233,7 @@ function GUIfyDummyElements(jParentEl)
 		$.each(toCheck[0].children(), function(idx, jEl){ //Check each child of toCheck
 			jEl = $(jEl);
 			var name = jEl.attr("data-guify-name");
-			if(isDef(name) && isDef(GUIfy.clsList[name]))
+			if(isDef(name) && isDef(GUIfy.clsCallList[name]))
 			{
 				var localChildren = GUIfyDummyElements(jEl); //Dummy all it's lower elements
 				//Give it the dummy element
@@ -235,11 +241,11 @@ function GUIfyDummyElements(jParentEl)
 					parent : localParent,
 					children : localChildren
 				};
-				GUIfyDummyChildren.push(jEl); //Add this to current child elements
+				GUIfyDummyChildren.push(jEl[0]); //Add this to current child elements
 			}
 			else
 			{
-				toCheck.push(el); //Otherwise, check their children
+				toCheck.push(jEl); //Otherwise, check their children
 			}
 		});
 		toCheck.shift(); //Remove checked element
@@ -250,11 +256,15 @@ function GUIfyDummyElements(jParentEl)
 //GUIfies all elements in jParentElements and all their children using the tree built by the dummy operation
 function GUIfyChildDummiedElements(jParentElements)
 {
-	var name = jEl.attr("data-guify-name");
-	$.each(jParentElements, function(){
+	$.each(jParentElements, function(idx, jEl){
+		jEl = $(jEl);
+		var name = jEl.attr("data-guify-name");
 		var fam = jEl[0].GUIfy_DummyFamily;
-		var newObj = GUIfy.clsList[name](jEl, fam.parent, fam.children); //GUIfy this object
-		GUIfyChildDummiedElements(fam.children); //GUIfy all children
-		newObj.notify("GUIfy_onReady"); //Notify that all children are set up, can do more work
+		var newController = new GUIfy.clsCallList[name]["cls"](jEl, fam.parent, fam.children); //GUIfy this object
+		if(fam.children.length > 0)
+			GUIfyChildDummiedElements(fam.children); //GUIfy all children
+		newController.GUIfyIsReady = true;
+		newController.notify("GUIfy_onReady"); //Notify that all children are set up, can do more work
+		delete jEl[0].GUIfy_DummyFamily;
 	});
 }

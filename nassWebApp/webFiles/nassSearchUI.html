@@ -7,6 +7,7 @@
 <link rel="stylesheet" type="text/css" href="./NASSSearch_theme.css">
 <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>-->
 <script src="./jquery.js"></script>
+<script src="./NASSSearch_global.js"></script>
 <script src="./NASSSearch_common.js"></script>
 <script src="./NASSSearch_searchBuilder.js"></script>
 <script src="./NASSSearch_searchResults.js"></script>
@@ -36,7 +37,7 @@ document.nassMain = new NASSSearch.NASSSearchMain();
 	<!-- Search Builder GUI 
 	Handles building a search, all the parameters, etc
 	-->
-	<div id="searchBuilder" class="stylePanelMargins">
+	<div id="searchBuilder" data-guify-name="searchBuilder" class="stylePanelMargins">
 		<div>
 			<div data-guify-name="builderControl" class="stylePanel">
 				<div class="dbTermPanel">
@@ -87,7 +88,7 @@ document.nassMain = new NASSSearch.NASSSearchMain();
 	<!-- Search Results GUI
 	Handles all the progress and output of the searching
 	-->
-	<div id="searchResults">
+	<div id="searchResults" data-guify-name="searchResults">
 		<div data-guify-name="summary" class="stylePanel stylePanelMargins">
 			Search jobId, time made, etc<br>
 			Search Visual<br>
