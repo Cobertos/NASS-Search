@@ -1,3 +1,4 @@
+import os
 from enum import Enum
 
 from .sas7bdatWrapper import SAS7BDATUtil
@@ -298,6 +299,7 @@ class NASSSearch():
     #Perform the search
     def perform(self):
         #Go through each year and each DB in that year
+        print("Root is at " + prefs["rootPath"])
         for year, yearInfo in data["preprocessDBInfo"].items():
             termsToCases = {}
             for dbName, dbInfo in yearInfo["dbs"].items():
@@ -307,6 +309,7 @@ class NASSSearch():
                     continue #Not a relevant database
                 
                 #Open the database and get cases
+                dbInfo["filePath"] = os.path.join(prefs["rootPath"], dbInfo["filePath"])
                 nassDB = NASSDB(dbInfo)
                 staticDBInfo = data["staticDBInfo"]["dbs"][dbName]
                 

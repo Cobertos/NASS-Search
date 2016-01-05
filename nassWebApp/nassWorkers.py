@@ -19,14 +19,27 @@ class NASSSearchWorker(threading.Thread):
     def run(self):
         #Perform the search
         self.status = "SEARCH"
-        self.search.perform()
+        try:
+            self.search.perform()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.status = "FAILED [" + e.__class__.__name__ + "]"
+            return
+            
         if self.status == "CANCELLING":
             self.status = "CANCELLED"
             return
             
         #Export the cases
         self.status = "EXPORT"
-        self.cases = self.search.export("links")
+        try:
+            self.cases = self.search.export("links")
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.status = "FAILED [" + e.__class__.__name__ + "]"
+            return
         if self.status == "CANCELLING":
             self.status = "CANCELLED"
             return

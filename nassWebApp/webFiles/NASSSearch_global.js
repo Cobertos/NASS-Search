@@ -126,6 +126,7 @@ GUIfy.objProto.display = function(disp)
 		el.GUIfyController.display(disp);
 	});
 	
+	//console.log("For " + this.GUIfyElement[0].tagName + "=>" + this.GUIfyElement.attr("data-guify-name") + " set " + disp);
 	this.GUIfyElement.css("display", (disp ? "block" : "none"));
 	this.notify("GUIfy_onDisplay", disp);
 };

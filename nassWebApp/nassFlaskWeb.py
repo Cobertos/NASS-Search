@@ -29,8 +29,7 @@ def jsonToNASSSearch(jsonData):
     }
     return nassSearchTerm.NASSSearchTerm.fromJSON(jsonObj, translateObj)
     
-
-
+#MAIN SERVING ROUTE
 @app.route('/app/<path:file>')
 def serve(file):
     """
@@ -51,6 +50,7 @@ def serve(file):
 def root():
     return redirect(url_for("serve",file="nassSearchUI.html"), 302)
 
+#AJAX REQUESTS
 @app.route('/api_init')
 def init():
     """

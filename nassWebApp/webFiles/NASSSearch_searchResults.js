@@ -32,7 +32,30 @@
 		})
 		.done(function(data, status, jXHR){
 			self.GUIfyElement.children("*[data-guify-name=progress]").children(".statusField").first().html(data);
+			
+			var firstData = data.split(" ")[0];
+			if(firstData == "DONE" || firstData == "FAILED" || firstData == "CANCELLED")
+				clearInterval(self.pollInterval);
 		});
 	};
+	
+	//Dummy placeholders (to get default GUIfy controllers on objects)
+	function SearchResults_Summary()
+	{
+		
+	};
+	NASSSearch.SearchResults_Summary = GUIfyClass(SearchResults_Summary, "summary");
+	
+	function SearchResults_Progress()
+	{
+		
+	};
+	NASSSearch.SearchResults_Progress = GUIfyClass(SearchResults_Progress, "progress");
+	
+	function SearchResults_Results()
+	{
+		
+	};
+	NASSSearch.SearchResults_Results = GUIfyClass(SearchResults_Results, "results");
 	
 })(window.NASSSearch = window.NASSSearch || {});
