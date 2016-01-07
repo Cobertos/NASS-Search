@@ -1,106 +1,140 @@
-#Unit testing?
+import traceback
+import unittest
 
-#The main test function
-#CaseTuples consist of 2 tuples of the form (case, expectSuccess)
-#case is the object to test with testFunc
-#expectSuccess is whether or not testFunc(case) will error. (So we can expect a test to fail and make that a success)
-#testFunc is a function returning None on success or a reason in a string in a failure
-def testCases(caseTuples, testFunc, useExpectSuccess=True):
-    for case in caseTuples:
-        if useExpectSuccess:
-            expectSuccess = case[1]
-            case = case[0]
-        else:
-            expectSuccess = True
+
+#nassDB.py - Loading a nass database with extra functionality
+
+
+#nassSearchTerm.py - All the search term stuff
+from nassAPI.nassSearchTerm import NASSSearchTerm, NASSSearch, NASSSearchJoin
+class TestCase_NASSSearchTerm(unittest.TestCase):
+    def setUp(self):
+        self.ts = [ #Array of tuples to more easily create string lists
+        ("db1", "bbb", "ccc", "ddd"),
+        ("db2", "bbb", "ccc", "ddd"),
+        ("db3", "bbb", "ccc", "ddd"),
+        ("db1", "___", "ccc", "ddd"),
+        ("db2", "___", "ccc", "ddd"),
+        ("db3", "___", "ccc", "ddd")]
         
-        passed = False
-        try:
-            reason = testFunc(case)
-            if not expectSuccess:
-                reason = "No error occured"
-            else:
-                passed = True
-        except Exception as e:
-            if not expectSuccess:
-                passed = True
-            else:
-                print("Failed on case: " + str(case))
-                print("Reason: Unexpected exception")
-                raise e
-                
-        try:
-            assert passed
-        except AssertionError as e:
-            print("Failed on case: " + str(case))
-            print("Reason: " + reason)
-            raise e
-
-
-
-#====Search Terms====
-from nassSearchTerm import NASSSearchTerm, NASSSearch
-
-#Search term string functions
-def testStringStuff(obj):
-    if not obj == NASSSearchTerm.fromStrList(obj).toStrList():
-        return "In an out test failed | " + str(obj) + " did not equal " + str(NASSSearchTerm.fromStrList(obj).toStrList())
-    if not obj.__str__() == NASSSearchTerm.fromStrList(obj).__str__():
-        return "Strings did not match"
-    return None
-
-tuple = [
-("db1", "bbb", "ccc", "ddd"),
-("db2", "bbb", "ccc", "ddd"),
-("db3", "bbb", "ccc", "ddd"),
-("db1", "___", "ccc", "ddd"),
-("db2", "___", "ccc", "ddd"),
-("db3", "___", "ccc", "ddd")]
-
-cases = [
-#Single terms
-( tuple[0], True   ),
-( [tuple[1]], False ),
-( ["aaa", "bbb", "ccc", "ddd"], False ),
-
-#Multiple terms
-( [tuple[0], "OR", tuple[3]], True ),
-( [tuple[0], "AND", tuple[1], "AND", tuple[0]], True ),
-( ["NOT", tuple[0], "AND", tuple[1]], True ),
-( ["AND", "AND"], False ),
-( ["AND", "AND", "AND"], False ),
-( ["NOT", tuple[0], tuple[2]], False ),
-
-#Nested terms
-( [tuple[0], "AND", tuple[1], "OR", [tuple[0], "OR", tuple[2]]] , True )
-]
     
-testCases(cases, testStringStuff)
+    def test_ValidTerms(self):
+        strLists = [
+        #Single term
+        self.ts[0],
+        #Multiple terms
+        [self.ts[0], "OR", self.ts[3]],
+        ["NOT", self.ts[0], "AND", self.ts[1]],
+        #Nested terms
+        ["NOT", self.ts[0], "AND", self.ts[1], "OR", [self.ts[0], "OR", self.ts[2]]],
+        ]
+    
+        #All lists should succeed
+        for strList in strLists:
+            outStr = None
+            try:
+                term = NASSSearchTerm.fromStrList(strList)
+            except Exception as e:
+                outStr = ("Extended Exception (see below)\n\n" + traceback.format_exc() +
+                    "\n" + str(strList) + " was invalid and should have been valid")
+            if outStr:
+                self.fail(msg=outStr)
+            
+            #Also, check the conversion: NASSSearchTerm <=> String List
+            self.assertTrue(strList == term.toStrList(), "\n" + str(strList) + " != " + str(term.toStrList()))
+    
+    def test_InvalidTerms(self):
+        strLists = [
+        #Single term
+        None, #Empty terms are invalid
+        [],
+        [self.ts[1]], #Don't accept collected terms with just one item
+        ["aaa", "bbb", "ccc", "ddd"], #A tuple term that should be a list
+        #Multiple terms
+        ["AND", "AND"], #Not even
+        ["AND", "AND", "AND"], #Not of form (NOT,), term, join, term
+        ["NOT", self.ts[0], self.ts[2]], #Same as above
+        ]
+    
+        #All lists should fail
+        for strList in strLists:
+            with self.assertRaises(Exception):
+                term = NASSSearchTerm.fromStrList(caseStrList, msg=str(strList) + " was valid and should have been valid")
+    
+    def test_TermOfDB(self):
+        #If we ofDB for db1...
+        strList = [
+        self.ts[0], "AND", self.ts[1], "AND", self.ts[2], "AND", #... in this row just self.ts[0]
+        self.ts[3], "AND", self.ts[4], "AND", self.ts[5], "AND", #... in this row just self.ts[3]
+        [self.ts[0], "AND", self.ts[3]]                          #... lastly, the entire chunk self.ts[0] and self.ts[3] will come out
+        ]
+        
+        outStrLists = [self.ts[0], self.ts[3], [self.ts[0], "AND", self.ts[3]]]
+        outTerms = [NASSSearchTerm.fromStrList(sl) for sl in outStrLists]
+        
+        term = NASSSearchTerm.fromStrList(strList)
+        
+        #Finds all sections of the term that specify a given db
+        ofDBSet = term.ofDB("db1")
+        
+        self.assertTrue(ofDBSet == set(outTerms))
+    
+    def test_TermResolve(self):
+        #Tests the resolve function of terms
+        #Workhorse for resolving term trees in compare and other situations
+        nts = [NASSSearchTerm.fromStrList(ts) for ts in self.ts] #Create terms from all tuples
+        
+        def mapFunc(obj):
+            if isinstance(obj.terms, dict):
+                if obj == nts[0]:
+                    return True
+                elif obj == nts[1]:
+                    return False
+            elif isinstance(obj.terms, tuple): #Resolve tuple terms by recursion, like most mapFuncs
+                return obj.resolve(mapFunc, joinFunc)
+        def joinFunc(firstTerm, join, secondTerm):
+            if join == NASSSearchJoin.AND:
+                return firstTerm and secondTerm
+            elif join == NASSSearchJoin.OR:
+                return firstTerm or secondTerm
+                
+        #Simple testing strList function, calls resolve
+        def t(strList):
+            term = NASSSearchTerm.fromStrList(strList)
+            return term.resolve(mapFunc, joinFunc)
+        
+        #ts[0] becomes True, ts[1] becomes False
+        #Simple test, no recursion
+        self.assertTrue(t([self.ts[0], "OR", self.ts[1]]) == True)
+        self.assertTrue(t([self.ts[0], "AND", self.ts[1]]) == False)
+        
+        #Will test the operator precendence
+        self.assertTrue(t([self.ts[0], "OR", self.ts[0], "AND", self.ts[1]]) == True)
+        
+        #Test tuple terms, and operator precedence
+        self.assertTrue(t([self.ts[0], "OR", self.ts[0], "AND", [self.ts[1], "AND", self.ts[0]]]) == True)
+        
+    """def test_CaseCompare(self):
+        strList = [
+        self.ts[0], "AND", self.ts[1], "AND", self.ts[2], "AND",
+        self.ts[3], "AND", self.ts[4], "AND", self.ts[5]
+        ]
+    
+        term = NASSSearchTerm.fromStrList(strList)
+        
+        #"resolves" the tree with booleans based on kvs where a term matchs
+        case.compare({"""
+        
+    
+    def test_CaseResolve(self):
+    
+    def test_DictTerms(self):
+    
+    def test_CaseFromJSON(self):
 
-
-#ofDB
-tmp1 = [("aaa", "bbb", "ccc", "ddd"), "OR", ("aaa", "bbb", "ccd", "ddd")]
-tmp = ["NOT", ("aaa", "bbb", "ccc", "ddd"), "AND", ("aab", "bbb", "ccc", "ddd"), "AND", ("aaa", "bbb", "ccc", "ddd"), "OR", tmp1]
-tmpTerm = NASSSearchTerm.fromStrList(tmp)
- 
-assert tmpTerm.ofDB("aaa") == set([NASSSearchTerm.fromStrList(tmp1)]) | set([NASSSearchTerm.fromStrList(("aaa", "bbb", "ccc", "ddd"))])
-
-#resolve
-'''from nassSearchTerm import NASSSearchJoin, resolveJoinedList
-def testCompare(obj):
-    def mapFunc(obj):
-        return obj
-    def joinFunc(firstTerm, join, secondTerm):
-        if join == NASSSearchJoin.AND:
-            return firstTerm and secondTerm
-        elif join == NASSSearchJoin.OR:
-            return firstTerm or secondTerm
-    return None if resolveJoinedList(obj[0], resolveFunc, joinFunc) == obj[1] else "Did not match"
-
-#Should return True because of operator precedence
-assert testCompare(([True, NASSSearchJoin.OR, True, NASSSearchJoin.AND, False], True)) == None'''
 
 #compare
-def comp(found, find):
+"""def comp(found, find):
     return found == find
 tmp = NASSSearchTerm.fromStrList([("aaa", "bbb", "ccc", comp), "AND", ("aaa", "___", "ccc", comp)])
 def testCompare(obj):
@@ -108,12 +142,6 @@ def testCompare(obj):
     expected = obj[1]
     if tmp.compare(kvs) != expected:
         return "Comparison to kvs was not " + expected + " as expected."
-    return None
-    
-cases = [
-({"bbb" : "ccc", "___" : "ccc"}, True),
-({"bbb" : "ccc", "___" : "ccb"}, False),
-({"bbb" : "ccb", "___" : "ccc"}, False)
-]
-
-testCases(cases, testCompare, useExpectSuccess=False)
+    return None"""
+if __name__ == "__main__":
+    unittest.main()

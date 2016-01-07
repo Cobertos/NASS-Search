@@ -5,15 +5,15 @@ from .sas7bdatWrapper import SAS7BDATUtil
 from .nassGlobal import prefs, data
 from .nassDB import NASSDB
 
-#Each term is a dictionary with dbName, colName, searchValue, compareFunc
-
 class NASSSearchJoin(Enum):
     AND = 0
     OR = 1
  
 #A heirarchical node type object that holds all the parameters of a search
-#Terms are the terms used to search, inverse is a logical not on this specific term
-#The object is meant to be immutable so try not to go poking around the values
+#Represents a search, holds not mutable state
+#Contains two main fields:
+# .terms are the terms used to search
+# .inverse is a logical not of anything this specific term contains (think boolean logic)
 class NASSSearchTerm():
     #Terms can be two things
     #1) A dict containing dbName, colName, searchValue, and compareFunc
