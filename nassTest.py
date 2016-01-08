@@ -9,13 +9,19 @@ import unittest
 from nassAPI.nassSearchTerm import NASSSearchTerm, NASSSearch, NASSSearchJoin
 class TestCase_NASSSearchTerm(unittest.TestCase):
     def setUp(self):
-        self.ts = [ #Array of tuples to more easily create string lists
-        ("db1", "bbb", "ccc", "ddd"),
-        ("db2", "bbb", "ccc", "ddd"),
-        ("db3", "bbb", "ccc", "ddd"),
-        ("db1", "___", "ccc", "ddd"),
-        ("db2", "___", "ccc", "ddd"),
-        ("db3", "___", "ccc", "ddd")]
+        def myEq(obj1, obj2):
+            return obj1 == obj2
+        def myStrIn(obj1, obj2):
+            return obj1 in obj2
+    
+        #Array of tuples to more easily create string lists
+        self.ts = [ 
+        ("db_1", "col_1", "val", myEq),
+        ("db_2", "col_1", "val", myEq),
+        ("db_3", "col_1", "val", myStrIn),
+        ("db_1", "col_2", "val", myEq),
+        ("db_2", "col_2", "val", myEq),
+        ("db_3", "col_2", "val", myStrIn)]
         
     
     def test_ValidTerms(self):
@@ -34,14 +40,14 @@ class TestCase_NASSSearchTerm(unittest.TestCase):
             outStr = None
             try:
                 term = NASSSearchTerm.fromStrList(strList)
-            except Exception as e:
+            except ValueError as e:
                 outStr = ("Extended Exception (see below)\n\n" + traceback.format_exc() +
                     "\n" + str(strList) + " was invalid and should have been valid")
             if outStr:
                 self.fail(msg=outStr)
             
             #Also, check the conversion: NASSSearchTerm <=> String List
-            self.assertTrue(strList == term.toStrList(), "\n" + str(strList) + " != " + str(term.toStrList()))
+            self.assertEqual(strList, term.toStrList())
     
     def test_InvalidTerms(self):
         strLists = [
@@ -58,8 +64,8 @@ class TestCase_NASSSearchTerm(unittest.TestCase):
     
         #All lists should fail
         for strList in strLists:
-            with self.assertRaises(Exception):
-                term = NASSSearchTerm.fromStrList(caseStrList, msg=str(strList) + " was valid and should have been valid")
+            with self.assertRaises(Exception, msg=str(strList) + " was valid and should have been valid"):
+                term = NASSSearchTerm.fromStrList(caseStrList)
     
     def test_TermOfDB(self):
         #If we ofDB for db1...
@@ -75,9 +81,9 @@ class TestCase_NASSSearchTerm(unittest.TestCase):
         term = NASSSearchTerm.fromStrList(strList)
         
         #Finds all sections of the term that specify a given db
-        ofDBSet = term.ofDB("db1")
+        ofDBSet = term.ofDB("db_1")
         
-        self.assertTrue(ofDBSet == set(outTerms))
+        self.assertEqual(ofDBSet, set(outTerms))
     
     def test_TermResolve(self):
         #Tests the resolve function of terms
@@ -105,43 +111,90 @@ class TestCase_NASSSearchTerm(unittest.TestCase):
         
         #ts[0] becomes True, ts[1] becomes False
         #Simple test, no recursion
-        self.assertTrue(t([self.ts[0], "OR", self.ts[1]]) == True)
-        self.assertTrue(t([self.ts[0], "AND", self.ts[1]]) == False)
+        self.assertEqual(t([self.ts[0], "OR", self.ts[1]]), True)
+        self.assertEqual(t([self.ts[0], "AND", self.ts[1]]), False)
         
         #Will test the operator precendence
-        self.assertTrue(t([self.ts[0], "OR", self.ts[0], "AND", self.ts[1]]) == True)
+        self.assertEqual(t([self.ts[0], "OR", self.ts[0], "AND", self.ts[1]]), True)
         
         #Test tuple terms, and operator precedence
-        self.assertTrue(t([self.ts[0], "OR", self.ts[0], "AND", [self.ts[1], "AND", self.ts[0]]]) == True)
+        self.assertEqual(t([self.ts[0], "OR", self.ts[0], "AND", [self.ts[1], "AND", self.ts[0]]]), True)
         
-    """def test_CaseCompare(self):
-        strList = [
-        self.ts[0], "AND", self.ts[1], "AND", self.ts[2], "AND",
-        self.ts[3], "AND", self.ts[4], "AND", self.ts[5]
-        ]
-    
+    def test_CaseCompare(self):
+        #Just db1
+        strList = [self.ts[0], "AND", self.ts[3]]
         term = NASSSearchTerm.fromStrList(strList)
         
-        #"resolves" the tree with booleans based on kvs where a term matchs
-        case.compare({"""
+        self.assertFalse(term.compare({
+            "col_1" : "aaa", #Doesn't match anything
+            "col_2" : "bbb",
+            "col_3" : "ccc"
+        }))
+        self.assertFalse(term.compare({
+            "col_1" : "val", #Only matches one column
+            "col_2" : "bbb",
+            "col_3" : "ccc"
+        }))
+        self.assertTrue(term.compare({
+            "col_1" : "val", #Matches necessary columns
+            "col_2" : "val",
+            "col_3" : "ccc"
+        }))
         
-    
-    def test_CaseResolve(self):
-    
     def test_DictTerms(self):
-    
+        #Get all distinct dicts terms out of a term
+        strList = [
+        self.ts[0], "AND", [self.ts[1], "AND", self.ts[2]], "AND",
+        self.ts[3], "AND", self.ts[4], "AND", self.ts[5], "AND", self.ts[0]
+        ]
+        dictTerms = NASSSearchTerm.fromStrList(strList).allTermDicts()
+        compareTo = [NASSSearchTerm.fromStrList(strList).terms for strList in self.ts[:6]]
+        
+        self.assertCountEqual(dictTerms, compareTo)
+        
     def test_CaseFromJSON(self):
-
-
-#compare
-"""def comp(found, find):
-    return found == find
-tmp = NASSSearchTerm.fromStrList([("aaa", "bbb", "ccc", comp), "AND", ("aaa", "___", "ccc", comp)])
-def testCompare(obj):
-    kvs = obj[0]
-    expected = obj[1]
-    if tmp.compare(kvs) != expected:
-        return "Comparison to kvs was not " + expected + " as expected."
-    return None"""
+        #Take JSON and create a term from it
+        
+        #Simple (one term)
+        myJson = {
+            "terms" : {
+                "dbName" : "db_1",
+                "colName" : "col_1",
+                "searchValue" : "val",
+                "compareFunc" : "something"
+            },
+            "inverse" : False
+        }
+        myStrList = ("db_1", "col_1", "val", "something")
+        self.assertEqual(NASSSearchTerm.fromStrList(myStrList), NASSSearchTerm.fromJSON(myJson))
+        
+        #Complex (multiple terms)
+        myJson = { "terms" : 
+        [{
+            "terms" : {
+                "dbName" : "db_1",
+                "colName" : "col_1",
+                "searchValue" : "val",
+                "compareFunc" : "something"
+            },
+            "inverse" : False
+        },
+        "AND",
+        {
+            "terms" : {
+                "dbName" : "db_2",
+                "colName" : "col_1",
+                "searchValue" : "val",
+                "compareFunc" : "something"
+            },
+            "inverse" : False
+        }],
+        "inverse" : False}
+        myStrList = [("db_1", "col_1", "val", "something"), "AND", ("db_2", "col_1", "val", "something")]
+        self.assertEqual(NASSSearchTerm.fromStrList(myStrList), NASSSearchTerm.fromJSON(myJson))
+        
+        
+        
+        
 if __name__ == "__main__":
     unittest.main()

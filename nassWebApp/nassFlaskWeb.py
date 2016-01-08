@@ -99,7 +99,7 @@ def presearch():
 
     requestData = codecs.decode(request.data, "utf_8");
     searchTerm = jsonToNASSSearch(requestData)
-    searchDicts = searchTerm.dictTerms()
+    searchDicts = searchTerm.allTermDicts()
     searchLookupDict = {}
     for d in searchDicts:
         for k, v in d.items():

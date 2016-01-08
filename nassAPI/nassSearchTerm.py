@@ -187,19 +187,20 @@ class NASSSearchTerm():
             return resolvedList[0]
     
     #Returns all the dicts from the entire NASSSearch term tree in one list
-    def dictTerms(self):
+    def allTermDicts(self):
+        return [s.terms for s in self._allTermDicts()]
+    def _allTermDicts(self):
         if isinstance(self.terms, dict):
-            return [self.terms]
+            return set([self])
         elif isinstance(self.terms, tuple):
-            retObj = []
+            retObj = set()
             for term in self.terms:
                 if not isinstance(term, NASSSearchTerm):
                     continue
-                moreTerms = term.dictTerms()
-                retObj.extend(moreTerms)
+                moreTerms = term._allTermDicts()
+                retObj.update(moreTerms)
                     
             return retObj
-        
     
     #Acts like a normal NASSSearchTerm without the class types
     #Has dicts, lists, etc, in places they'd normally be and strings become joins
