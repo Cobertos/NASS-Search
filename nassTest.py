@@ -28,6 +28,7 @@ class TestCase_NASSSearchTerm(unittest.TestCase):
         strLists = [
         #Single term
         self.ts[0],
+        ("NOT",) + self.ts[0][:],
         #Multiple terms
         [self.ts[0], "OR", self.ts[3]],
         ["NOT", self.ts[0], "AND", self.ts[1]],

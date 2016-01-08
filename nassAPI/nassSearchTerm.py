@@ -276,6 +276,8 @@ class NASSSearchTerm():
                     self.terms["colName"],
                     self.terms["searchValue"],
                     self.terms["compareFunc"])
+            if self.inverse:
+                out = ("NOT",) + out
         elif isinstance(self.terms, tuple):
             out = ["NOT"] if self.inverse else []
             for term in self.terms:
