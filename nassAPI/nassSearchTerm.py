@@ -291,7 +291,6 @@ class NASSSearchTerm():
                     
         return out
 
-#A term is stateless but describes exactly what we need from each database and how it relates
 #NASSSearch continues to collect data from each subsequent search and how it relates to the original terms and
 #resolves it all down to the final cases        
 class NASSSearch():

@@ -3,7 +3,13 @@ import unittest
 
 
 #nassDB.py - Loading a nass database with extra functionality
-
+'''from nassAPI.nassDB import NASSDB
+class TestCase_NASSDB(unittest.TestCase):
+    def setUp(self):
+        pass
+        
+    def test_Basics(self):'''
+        
 
 #nassSearchTerm.py - All the search term stuff
 from nassAPI.nassSearchTerm import NASSSearchTerm, NASSSearch, NASSSearchJoin
