@@ -1,33 +1,53 @@
-#A simple script to give a summary of a .sas7bdat file
-#Mainly for exploring the files that SAS includes to see if it's worth looking into
+#A simple script to explore SAS7BDAT files interactively
+#Windows only due to msvcrt
+#Doesn't handle end of file (IteratorStop exception)
 import sys
+import msvcrt
 
 from sas7bdat import SAS7BDAT
 
+def aStr(a):
+    return "[" + ",".join(a) + "]"
+
 if __name__ == "__main__":
-    print("Sas7bDat Summary\n")
+    print("Sas7bDat Summary == WINDOWS ONLY")
+    print("f for forward, b for backward, q to quit\n")
     if len(sys.argv) != 2:
         print("Usage: sasSummary.py [.sas7bdat file]")
         sys.exit()
         
     filePath = sys.argv[1]
-    with SAS7BDAT(filePath) as db:
+    with SAS7BDAT(filePath, skip_header=True) as db:
         print("COLUMNS")
         #Decode some of the information
-        for col in db.columns:
-            print(col.name.decode(db.encoding, db.encoding_errors))
-
-        input("Press ENTER to continue...")
+        cols = [col.name.decode(db.encoding, db.encoding_errors) for col in db.columns]
+        print(aStr(cols))
+        print("")
         
-        print("\nEXAMPLE DATA")
-        count = 0
-        for row in db:
-            print("\nEXAMPLE SET #" + str(count+1))
-            for v in row:
-                print(v)
-            input("Press ENTER to continue...")
+        dbPos = 0
+        lookPos = 0
+        rowCache = dict()
+        inChar = None
+        dbItr = iter(db)
+        while True:
+            #Get current look row
+            if lookPos >= dbPos:
+                row = [str(a) for a in dbItr.__next__()]
+                dbPos+=1
+                rowCache[lookPos] = row
+            else:
+                row = rowCache[lookPos]
+                
+            print("P:" + str(lookPos) + " " + aStr(row))
             
-            count+=1
-            if count>5:
+            #Get the control character and do stuff
+            inChar = msvcrt.getch().decode("ascii", "strict")
+            
+            if inChar == "q":
                 sys.exit()
-        
+            elif inChar == "b":
+                lookPos-=1
+                if lookPos < 0:
+                    lookPos = 0
+            elif inChar == "f":
+                lookPos+=1

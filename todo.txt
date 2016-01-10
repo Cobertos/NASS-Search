@@ -1,4 +1,3 @@
-* Make the tests a bit more robust
 * Add the line joining in nassDB
 * Add options to both nass and nassPreprocess eventually
 
