@@ -3,7 +3,7 @@ import re
 from .sas7bdatWrapper import SAS7BDATUtil
 
 from .nassGlobal import prefs
-from .nassCase import NASSCase
+from .nassCase import NASSStubData
 
 class NASSDB():
     """
@@ -70,12 +70,11 @@ class NASSDB():
             data["dbCaseType"] = "VEH"
                 
             
-#TODO: Change class name to NASSCaseDB
-#TODO: Replace all uses of db.valid with a getData try/catch
-#TODO: Change all constructors to use the filepath instead of the data object
-#TODO: Search should be mandatory but allow wildcards (for getCases)
-#TODO: self.data["year"] what do we do with that
-#TODO: Add TEXTxx support
+#EXTODO: Change class name to NASSCaseDB, better describes it
+#EXTODO: Replace all uses of db.valid with a getData try/catch
+#EXTODO: Change all constructors to use the filepath instead of the data object
+#L8TODO: Search should be mandatory but allow wildcards (for getCases)
+#TODO: Add TEXTxxNUM in data
     def getInstanceData(self):
         """
         getData() but on an instance
@@ -85,34 +84,31 @@ class NASSDB():
     def __init__(self, path, year=None):
         self.getData = self.getInstanceData
         self.data = data = self.__class__.getData(path, year=year, internal=True)
-        
-    #Gets a list of all the cases that match the search terms
-    #Stubs - Should we return all the data we store in this database or just stubs of cases
+    
+    #Gets a list of all the stubDatas that match the search terms
+    #Stubs - Should we return all the data we store in this database or just keys to identify the cases
     #Search - Search is a list of multiple terms that we test each row against. Each match is stored along with it's matching term
-    #           No search is just a dump of all the cases in the file
+    #           No search is just a dump of all the matches in the file
     def getCases(self, stubs=False, search=None):
         if search:
-            cases = {}
+            matches = {}
             for term in search:
-                cases[term] = []
+                matches[term] = []
         else:
-            cases = []
-        
-        def getIdent(self, db, row):
-            if self.data["dbCaseType"] == "CASE":
-                return row[db.colToIdx("CASENO")]
-            elif self.data["dbCaseType"] == "OCC":
-                return row[db.colToIdx("CASENO")] + "_" + row[db.colToIdx("VEHNO")]
-            elif self.data["dbCaseType"] == "VEH":
-                return row[db.colToIdx("CASENO")] + "_" + row[db.colToIdx("VEHNO")] + "_" + row[db.colToIdx("OCCNO")]
-        
-            
+            matches = []
+
         with SAS7BDATUtil(self.data["filePath"], skip_header=True) as db:
             textxxRowCache = dict()
+            toStubData = None
             for row in db:
+                #Get the stubData for this row
+                kvs = list(zip(db.column_names_decoded, row))
+                
+                #Can we use these kvs straight away?
                 #TEXTxx has a much different case creation process (we wait until all lines of case are there)
                 if "TEXTxx" in self.data:
-                    ident = getIdent(self, db, row)
+                    #Check if the line we're looking for is already in the cache
+                    ident = NASSStubData.getKVIdentTuple("", "CASE", row)
                     if ident in textxxRowCache:
                         cacheObj = textxxRowCache[ident]
                     else:
@@ -120,38 +116,44 @@ class NASSDB():
                             "lines" : dict(),
                             "lastLine" : -1,
                         }
-                
+                    #TODO: Make this more readable
+                    
+                    #Update lines
                     lineNum = int(row[db.colToIdx("LINENO")])
                     cacheObj["lines"][lineNum] = row[db.colToIdx(self.data["TEXTxx"])]
-                    if row[db.colToIdx(self.data["TEXTxx"])] < self.data["TEXTxxNUM"]:
+                    #Check to see if we found the last line, record if we did
+                    
+                    if len(row[db.colToIdx(self.data["TEXTxx"])]) < self.data["TEXTxxNUM"]:
                         cacheObj["lastLine"] = int(row[db.colToIdx(self.data["TEXTxx"])]
                         
+                    #Check to see if we have all the lines, make the final kv if so
                     if cacheObj["lastLine"] == len(cacheObj["lines"].keys()):
-                        #TODO: Get the final case from these lines and compare
-                
-                
-                #Take this row and make it a bunch of kvs
-                kvs = zip(db.column_names_decoded, row)
-                
-                #Make the
-                case = NASSCase(self.data["year"])
-                for col in self.columns:
-                    #If we only want case stubs skip everything else that's not in a case stub
-                    if (not stubs) or col.name in prefs["stubKeys"]:
-                        case.feedData(self.data["fileName"], {col.name:row[col.col_id]})
-                
-                case = None
-                if search:
-                    for term in search:
-                        if term.compare(kvs):
-                            cases[term].append(case)
-                
-                
-            
-                #If we're searching, make sure this row matches
-                
-                    
+                        #Combine all the lines into LINETXT
+                        del row["LINENO"]
+                        del row[self.data["TEXTxx"]]
+                        row["LINETXT"] = "".join([cacheObj["lines"].values()]) #TODO: values might not be sorted!
+                        toStubData = row
+                        del textxxRowCache[ident]
+                #If no TEXTxx, just straight to kvs
                 else:
-                    cases.append(case)
-        
-        return cases
+                    toStubData = kvs
+                
+                #Process the pending toStubData if we're able to
+                if toStubData:
+                    #Only use stubs keys if stubs
+                    if stubs:
+                        toStubData = {k:toStubData[k] for k in prefs["stubKeys"] if k in toStubData}
+                    #Make the stub data
+                    stubData = NASSStubData(self.data["year"], db.data["dbCaseType"], toStubData)
+                    #Put in correct location
+                    if search:
+                        for term in search:
+                            if term.compare(stubData.kvs):
+                                matches[term].append(stubData)
+                    else:
+                        matches.append(stubData)
+                    
+                    toStubData = None
+            
+                
+        return matches
