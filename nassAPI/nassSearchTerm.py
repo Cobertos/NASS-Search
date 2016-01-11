@@ -3,7 +3,7 @@ from enum import Enum
 
 from .sas7bdatWrapper import SAS7BDATUtil
 from .nassGlobal import prefs, data
-from .nassDB import NASSDB
+from .nassDB import NASSCaseDB
 
 class NASSSearchJoin(Enum):
     AND = 0
@@ -312,13 +312,13 @@ class NASSSearch():
                 
                 #Open the database and get cases
                 dbInfo["filePath"] = os.path.join(prefs["rootPath"], dbInfo["filePath"])
-                nassDB = NASSDB(dbInfo)
+                nassCaseDB = NASSCaseDB(dbInfo)
                 staticDBInfo = data["staticDBInfo"]["dbs"][dbName]
                 
                 printStr = year + "  \"" + staticDBInfo["prettyName"] + "\" @ \"" + ((dbInfo["filePath"][:35] + '..') if len(dbInfo["filePath"]) > 35 else dbInfo["filePath"]) + "\""   
                 print(printStr)
         
-                cases = nassDB.getCases(stubs=True,search=relevantTerms)
+                cases = nassCaseDB.getCases(stubs=True,search=relevantTerms)
                 termsToCases.update(cases)
         
             self.foundCases = self.foundCases.union(self.resolve(termsToCases))

@@ -5,7 +5,7 @@ from .sas7bdatWrapper import SAS7BDATUtil
 from .nassGlobal import prefs
 from .nassCase import NASSStubData
 
-class NASSDB():
+class NASSCaseDB():
     """
     A NASS DB that holds case information
     
@@ -70,7 +70,6 @@ class NASSDB():
             data["dbCaseType"] = "VEH"
                 
             
-#EXTODO: Change class name to NASSCaseDB, better describes it
 #EXTODO: Replace all uses of db.valid with a getData try/catch
 #EXTODO: Change all constructors to use the filepath instead of the data object
 #L8TODO: Search should be mandatory but allow wildcards (for getCases)
@@ -155,5 +154,4 @@ class NASSDB():
                     
                     toStubData = None
             
-                
         return matches

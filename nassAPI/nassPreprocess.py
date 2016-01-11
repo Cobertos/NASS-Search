@@ -5,7 +5,7 @@ import subprocess
 
 import .nassGlobal
 from .nassGlobal import prefs, data
-from .nassDB import NASSDB
+from .nassDB import NASSCaseDB
 
 #Preprocesses the NASSDB folder for everything that's there
 #Currently throws everything into a JSON file pretty printed
@@ -15,7 +15,7 @@ from .nassDB import NASSDB
 #A database is only read if it occurs in one of the prefs["dataDirNames"] directories
 #A database is only read if it occurs in the staticDBInfo.json file
 #A database is only read if it ends in .sas7bdat
-#Columns of a database are gathered from NASSDB (so it is allowed to filter/condense column names as it sees fit)
+#Columns of a database are gathered from NASSCaseDB (so it is allowed to filter/condense column names as it sees fit)
 
 #Find all the important files within a year directory
 def findYearFiles(year, rootYearPath):
@@ -88,10 +88,10 @@ def findYearFiles(year, rootYearPath):
             if not entry in data["staticDBInfo"]["dbs"].keys():
                 continue
                 
-            #TODO: This is a little wonky because NASSDB expects a data object right now
+            #TODO: This is a little wonky because NASSCaseDB expects a data object right now
             #   Make it accept just a fp or something?
             dbInfo = {"filePath" : entryFilePath, "fileName" : entry}
-            db = NASSDB(dbInfo)
+            db = NASSCaseDB(dbInfo)
             if not db.valid: #Make sure it's valid
                 continue
             
