@@ -14,7 +14,6 @@ class NASSDB():
     
     """
 
-
     @classmethod
     def getData(cls, path, year=None, internal=False):
         """
@@ -77,8 +76,15 @@ class NASSDB():
 #TODO: Search should be mandatory but allow wildcards (for getCases)
 #TODO: self.data["year"] what do we do with that
 #TODO: Add TEXTxx support
+    def getInstanceData(self):
+        """
+        getData() but on an instance
+        """
+        return self.data
+
     def __init__(self, path, year=None):
-        self.data = data = self.__class__.getData(path, year, internal=True)
+        self.getData = self.getInstanceData
+        self.data = data = self.__class__.getData(path, year=year, internal=True)
         
     #Gets a list of all the cases that match the search terms
     #Stubs - Should we return all the data we store in this database or just stubs of cases
@@ -122,6 +128,7 @@ class NASSDB():
                         
                     if cacheObj["lastLine"] == len(cacheObj["lines"].keys()):
                         #TODO: Get the final case from these lines and compare
+                
                 
                 #Take this row and make it a bunch of kvs
                 kvs = zip(db.column_names_decoded, row)
