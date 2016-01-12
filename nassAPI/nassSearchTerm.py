@@ -360,10 +360,10 @@ class NASSSearch():
             #First take all the cases and sort them by year
             casesByYear = {}
             for case in self.foundCases:
-                if case.year in casesByYear:
-                    casesByYear[case.year].append(case)
+                if case["CASE_YEAR"] in casesByYear:
+                    casesByYear[case["CASE_YEAR"]].append(case)
                 else:
-                    casesByYear[case.year] = [case]
+                    casesByYear[case["CASE_YEAR"]] = [case]
         
             #Go through each year and compare the cases to get the link
             casesToLink = []

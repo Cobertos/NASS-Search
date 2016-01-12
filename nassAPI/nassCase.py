@@ -43,6 +43,12 @@ class NASSStubData():
     def __ne__(self, other):
         return not self.__eq__(other)
     
+    def __getitem__(self, key):
+        return self.kvs[key]
+        
+    def __setitem__(self, key, val):
+        self.kvs[key] = val
+    
     def copyEmpty(self, type):
         """
         Copies this object with only the kvs that identify it
@@ -105,6 +111,28 @@ class NASSCase():
     
     def __ne__(self, other):
         return not self.__eq__(other)
+        
+    def __getitem__(self, key):
+        if type(key) == int:
+            for veh in self.vehs:
+                if veh["VEHNO"] == str(key):
+                    return veh
+            raise IndexError("No vehicle with that VEHNO exists")
+        elif key == "CASE_YEAR":
+            return self.stubData.year
+        else: # type(key) == str:
+            return self.stubData[key]
+        
+    def __setitem__(self, key, val):
+        if type(key) == int:
+            raise ValueError("Cannot set an integer key on this object")
+        elif key == "CASE_YEAR":
+            self.stubData.year = val
+        else: # type(key) == str:
+            self.stubData[key] = val
+    
+    def __len__(self):
+        return len(self.vehs.keys())
     
     def feedStubData(self, stubData):
         """
