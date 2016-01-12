@@ -12,12 +12,15 @@ class SAS7BDATUtil(SAS7BDAT):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        #Decode column names
-        self.column_names_decoded = [codecs.decode(db.encoding, db.encoding_errors) for str in self.column_names]
-        #Sort by col_id just to be sure
+        #Sort columns first to be sure of right order
         def k(a):
             return a.col_id
-        self.column_names_decoded.sort(key=k)
+        self.tmpColumns = self.columns[:]
+        self.tmpColumns.sort(key=k)
+        
+        #Decode column names
+        self.column_names_decoded = [codecs.decode(col.name, self.encoding, self.encoding_errors) for col in self.tmpColumns]
+        del self.tmpColumns
 
     def colToIdx(self, colName):
         return self.column_names_decoded.index(colName)

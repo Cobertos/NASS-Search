@@ -16,7 +16,7 @@ class NASSStubData():
         return tuple(ret)
     
     def __init__(self, year, dbType, kvs):
-        if not self.type in ["CASE", "VEH", "OCC"]:
+        if not dbType in ["CASE", "VEH", "OCC"]:
             raise ValueError("Invalid database type given")
     
         self.year = year
@@ -81,12 +81,11 @@ class NASSStubData():
             cmpTuple = NASSStubData.getKVIdentTuple(year, dbType, kvs)
         except KeyError:
             raise ValueError("Kvs passed is not compatible with this data stub")
-        if cmpTuple != self.getIdentTuple()
+        if cmpTuple != self.getIdentTuple():
             raise ValueError("Kvs passed is not compatible with this data stub")
             
         self.kvs.update(kvs)
-        
-#TODO: Check any use of NASSCase   
+         
 class NASSCase():
     """
     Represents a NASSCase

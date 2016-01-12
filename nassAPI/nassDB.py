@@ -1,9 +1,10 @@
 import re
+import os
 
 from .sas7bdatWrapper import SAS7BDATUtil
 
 from .nassGlobal import prefs
-from .nassCase import NASSStubData
+from .nassCase import NASSStubData, NASSCase
 
 class NASSCaseDB():
     """
@@ -34,7 +35,7 @@ class NASSCaseDB():
             data["year"] = year
         else:
             splitPath = path
-            for p in os.path.split(splitPath):
+            for splitPath in os.path.split(splitPath):
                 matchObj = re.match("^\d{4}$", splitPath[1])
                 splitPath = splitPath[0]
                 if splitPath == "":
@@ -63,7 +64,7 @@ class NASSCaseDB():
                 #Long line columns exist
                 data["TEXTxx"] = TEXTxx
                 matchObj = re.match("^TEXT(\d+)$", TEXTxx)
-                data["TEXTxxNUM"] = matchObj.group(1)
+                data["TEXTxxNUM"] = int(matchObj.group(1))
                 
                 data["columnNames"].remove("LINENO")
                 data["columnNames"].remove(TEXTxx)
@@ -78,6 +79,8 @@ class NASSCaseDB():
             data["dbCaseType"] = "OCC"
         elif hasVEHNO:
             data["dbCaseType"] = "VEH"
+            
+        return data
                 
             
 #TODO: Search should be mandatory but allow wildcards (for getCases)
@@ -108,13 +111,13 @@ class NASSCaseDB():
             toStubData = None
             for row in db:
                 #Get the stubData for this row
-                kvs = list(zip(db.column_names_decoded, row))
+                kvs = dict(zip(db.column_names_decoded, row))
                 
                 #Can we use these kvs straight away?
                 #TEXTxx has a much different case creation process (we wait until all lines of case are there)
                 if "TEXTxx" in self.data:
                     #Check if the line we're looking for is already in the cache
-                    ident = NASSStubData.getKVIdentTuple("", "CASE", row)
+                    ident = NASSStubData.getKVIdentTuple("", "CASE", kvs)
                     if ident in textxxRowCache:
                         cacheObj = textxxRowCache[ident]
                     else:
@@ -125,20 +128,20 @@ class NASSCaseDB():
                     #TODO: Make this more readable
                     
                     #Update lines
-                    lineNum = int(row[db.colToIdx("LINENO")])
-                    cacheObj["lines"][lineNum] = row[db.colToIdx(self.data["TEXTxx"])]
+                    lineNum = int(kvs["LINENO"])
+                    cacheObj["lines"][lineNum] = kvs[self.data["TEXTxx"]]
                     #Check to see if we found the last line, record if we did
                     
-                    if len(row[db.colToIdx(self.data["TEXTxx"])]) < self.data["TEXTxxNUM"]:
-                        cacheObj["lastLine"] = int(row[db.colToIdx(self.data["TEXTxx"])]
+                    if len(kvs[self.data["TEXTxx"]]) < self.data["TEXTxxNUM"]:
+                        cacheObj["lastLine"] = int(kvs["LINENO"])
                         
                     #Check to see if we have all the lines, make the final kv if so
                     if cacheObj["lastLine"] == len(cacheObj["lines"].keys()):
                         #Combine all the lines into LINETXT
-                        del row["LINENO"]
-                        del row[self.data["TEXTxx"]]
-                        row["LINETXT"] = "".join([cacheObj["lines"].values()]) #TODO: values might not be sorted!
-                        toStubData = row
+                        del kvs["LINENO"]
+                        del kvs[self.data["TEXTxx"]]
+                        kvs["LINETXT"] = "".join(cacheObj["lines"].values()) #TODO: values might not be sorted!
+                        toStubData = kvs
                         del textxxRowCache[ident]
                 #If no TEXTxx, just straight to kvs
                 else:
@@ -150,7 +153,7 @@ class NASSCaseDB():
                     if stubs:
                         toStubData = {k:toStubData[k] for k in prefs["stubKeys"] if k in toStubData}
                     #Make the stub data
-                    stubData = NASSStubData(self.data["year"], db.data["dbCaseType"], toStubData)
+                    stubData = NASSStubData(self.data["year"], self.data["dbCaseType"], toStubData)
                     #Put in correct location
                     if search:
                         for term in search:
@@ -164,6 +167,6 @@ class NASSCaseDB():
         return matches
     
     #Get all the stubDatas as cases
-    def getCases(self, *args, **kwargs)
+    def getCases(self, *args, **kwargs):
         stubDatas = self.getStubDatas(*args, **kwargs)
         return [NASSCase(sd) for sd in stubDatas]
