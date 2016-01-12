@@ -35,12 +35,17 @@ class NASSCaseDB():
             data["year"] = year
         else:
             splitPath = path
-            for splitPath in os.path.split(splitPath):
-                matchObj = re.match("^\d{4}$", splitPath[1])
+            while splitPath != "":
+                splitPath = os.path.split(splitPath)
+                
+                matchObj = re.match("^(\d{4})$", splitPath[1])
+                if matchObj:
+                    data["year"] = matchObj.group(1)
+                    break
+                    
                 splitPath = splitPath[0]
-                if splitPath == "":
-                    raise ValueError("Could not infer the year from the given path")
-            data["year"] = matchObj
+            if not "year" in data:
+                raise ValueError("Could not infer the year from the given path")
         
         with SAS7BDATUtil(path) as db:
             #Store names in order of column id
@@ -169,4 +174,9 @@ class NASSCaseDB():
     #Get all the stubDatas as cases
     def getCases(self, *args, **kwargs):
         stubDatas = self.getStubDatas(*args, **kwargs)
-        return [NASSCase(sd) for sd in stubDatas]
+        if "search" in kwargs.keys():
+            for k, v in stubDatas.items():
+                stubDatas[k] = [NASSCase(sd) for sd in v]
+            return stubDatas
+        else:
+            return [NASSCase(sd) for sd in stubDatas]

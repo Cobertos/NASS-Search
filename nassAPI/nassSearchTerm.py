@@ -372,7 +372,7 @@ class NASSSearch():
                     for row in linksDB:
                         #Compare the row to the cases of that year
                         for case in casesByYear[year]:
-                            if case.compare(linksDB.rowToKVs(row)):
+                            if case.matchesKVsIdent(year, linksDB.rowToKVs(row)):
                                 print("FOUND")
                                 which = "CASEID" if "CASEID" in linksDB.column_names_decoded else "SCASEID"
                                 #caseid = '{:0f}'.format()

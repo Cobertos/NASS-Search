@@ -35,7 +35,7 @@ class NASSStubData():
         return NASSStubData.getKVIdentTuple(self.year, self.type, self.kvs)
     
     def __hash__(self):
-        self.getIdentTuple().__hash__()
+        return self.getIdentTuple().__hash__()
         
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
@@ -71,7 +71,7 @@ class NASSStubData():
         return NASSStubData(self.year, type, newKVs)
     
     def feedStubData(self, stubData):
-        feedData(stubData.year, stubData.type, stubData.kvs)
+        self.feedData(stubData.year, stubData.type, stubData.kvs)
     
     def feedData(self, year, dbType, kvs):
         """
@@ -133,13 +133,16 @@ class NASSCase():
     def __len__(self):
         return len(self.vehs.keys())
     
+    def matchesKVsIdent(self, year, kvs):
+        return NASSStubData.getKVIdentTuple(year, "CASE", kvs) == self.stubData.getIdentTuple()
+    
     def feedStubData(self, stubData):
         """
         Feeds stub data into the case
         """
         #If the stub data is a case, feed to this object's stubData
         if stubData.type == "CASE":
-            self.stubData.feedData(stubData)
+            self.stubData.feedStubData(stubData)
         #Otherwise it should be buried deeper in the case
         else:
             idTup = stubData.getIdentTuple()[:4]
@@ -148,10 +151,10 @@ class NASSCase():
             else:
                 self.vehs[idTup].feedStubData(stubData)
     
+    #TODO: Redo pretty print
     def prettyPrint(self, fixedLen=None):
-        raise NotImplementedError("Not updated to use new case layout")
-        """ret = "CASE: year:\"" + str(self.year) + "\" psu:\"" + str(self.psu) + "\" caseno:\"" + str(self.num) + "\"\n"
-        for db, kvs in self.dbs.items():
+        ret = "CASE: year:\"" + str(self["CASE_YEAR"]) + "\" psu:\"" + str(self["PSU"]) + "\" caseno:\"" + str(self["CASENO"]) + "\"\n"
+        """for db, kvs in self.dbs.items():
             substr = "[" + str(db) + "| "
             for k, v in kvs.items():
                 substr += str(k) + ":" + str(v) + ", "
@@ -159,8 +162,8 @@ class NASSCase():
                     s += substr + "\n"
                     substr = ""
             substr += "]\n"
-        ret += substr
-        return ret"""
+        ret += substr"""
+        return ret
         
 class NASSCaseVehicle(NASSCase):
     """
@@ -179,7 +182,7 @@ class NASSCaseVehicle(NASSCase):
         """
         #If the stub data is a vehicle, feed to this object's stubData
         if stubData.type == "VEH":
-            self.stubData.feedData(stubData)
+            self.stubData.feedStubData(stubData)
         #Otherwise it should be buried deeper in the vehicle (as an occupant)
         else:
             idTup = stubData.getIdentTuple()
@@ -206,7 +209,7 @@ class NASSCaseOccupant(NASSCase):
         """
         #If the stub data is a vehicle, feed to this object's stubData
         if stubData.type == "OCC":
-            self.stubData.feedData(stubData)
+            self.stubData.feedStubData(stubData)
         else:
             raise ValueError("Not a valid stubData for an occupant")
     
