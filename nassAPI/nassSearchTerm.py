@@ -311,11 +311,11 @@ class NASSSearch():
                     continue #Not a relevant database
                 
                 #Open the database and get cases
-                dbInfo["filePath"] = os.path.join(prefs["rootPath"], dbInfo["filePath"])
-                nassCaseDB = NASSCaseDB(dbInfo)
+                fp = os.path.join(prefs["rootPath"], dbInfo["filePath"])
+                nassCaseDB = NASSCaseDB(fp)
                 staticDBInfo = data["staticDBInfo"]["dbs"][dbName]
                 
-                printStr = year + "  \"" + staticDBInfo["prettyName"] + "\" @ \"" + ((dbInfo["filePath"][:35] + '..') if len(dbInfo["filePath"]) > 35 else dbInfo["filePath"]) + "\""   
+                printStr = year + "  \"" + staticDBInfo["prettyName"] + "\" @ \"" + ((fp[:35] + '..') if len(fp) > 35 else fp) + "\""   
                 print(printStr)
         
                 cases = nassCaseDB.getCases(stubs=True,search=relevantTerms)

@@ -95,7 +95,7 @@ class NASSCaseDB():
     #Stubs - Should we return all the data we store in this database or just keys to identify the cases
     #Search - Search is a list of multiple terms that we test each row against. Each match is stored along with it's matching term
     #           No search is just a dump of all the matches in the file
-    def getCases(self, stubs=False, search=None):
+    def getStubDatas(self, stubs=False, search=None):
         if search:
             matches = {}
             for term in search:
@@ -162,3 +162,8 @@ class NASSCaseDB():
                     toStubData = None
             
         return matches
+    
+    #Get all the stubDatas as cases
+    def getCases(self, *args, **kwargs)
+        stubDatas = self.getStubDatas(*args, **kwargs)
+        return [NASSCase(sd) for sd in stubDatas]
