@@ -60,12 +60,12 @@ def findYearFiles(year, rootYearPath):
             if extension != "exe":
                 continue
                 
-            #There's no good test to see if it's a WinZip self-extracting archive
-            #TODO: Wait for email from WinZip to see if there is
+            #There's no good test to see if it's a WinZip self-extracting archive (confirmed by WinZip support)
             print("Found possible WinZip self-extracting archive \"" + entry + "\".")
             print("Executables are not automatically run for safety. Only run if you trust your source of NASS data.")
             yn = nassGlobal.userYN("Would you like to run this file? [y or n]: ")
             if yn:
+                #The /auto runs with no prompt, '.' extracts to the current directory
                 subprocess.call([entryFilePath, "/auto", "."])
                 print("Extracted.")
                 os.remove(entryFilePath)
@@ -88,19 +88,13 @@ def findYearFiles(year, rootYearPath):
             if not entry in data["staticDBInfo"]["dbs"].keys():
                 continue
                 
-            #TODO: This is a little wonky because NASSCaseDB expects a data object right now
-            #   Make it accept just a fp or something?
-            dbInfo = {"filePath" : entryFilePath, "fileName" : entry}
-            db = NASSCaseDB(dbInfo)
-            if not db.valid: #Make sure it's valid
+            #See if valid database
+            try:
+                dbData = NASSCaseDB.getData(entryFilePath, year=year)
+            except:
                 continue
             
-            columns = [col.name for col in db.columns] #Get columns and filepath and store it
-            paths["dbs"][entry]= {
-                "year" : year,
-                "fileName" : entry,
-                "filePath" : entryFilePath,
-                "columnNames" : columns}
+            paths["dbs"][entry] = dbData
             print("Found DB: " + entryFilePath)
                     
     return paths

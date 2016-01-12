@@ -29,10 +29,17 @@ class NASSCaseDB():
         
         data = dict()
         data["filePath"] = path
+        data["fileName"] = os.path.split(path)[1]
         if year:
             data["year"] = year
         else:
-            #TODO:Split up path by / or \, get any folder that happens to be all numbers >= 4 digits
+            splitPath = path
+            for p in os.path.split(splitPath):
+                matchObj = re.match("^\d{4}$", splitPath[1])
+                splitPath = splitPath[0]
+                if splitPath == "":
+                    raise ValueError("Could not infer the year from the given path")
+            data["year"] = matchObj
         
         with SAS7BDATUtil(path) as db:
             #Store names in order of column id
@@ -50,10 +57,13 @@ class NASSCaseDB():
             for col in data["columnNames"]:
                 if re.match("^TEXT\d+$", col):
                     TEXTxx = col
+                    break
                     
             if TEXTxx != None and hasLINENO:
                 #Long line columns exist
                 data["TEXTxx"] = TEXTxx
+                matchObj = re.match("^TEXT(\d+)$", TEXTxx)
+                data["TEXTxxNUM"] = matchObj.group(1)
                 
                 data["columnNames"].remove("LINENO")
                 data["columnNames"].remove(TEXTxx)
@@ -70,10 +80,7 @@ class NASSCaseDB():
             data["dbCaseType"] = "VEH"
                 
             
-#EXTODO: Replace all uses of db.valid with a getData try/catch
-#EXTODO: Change all constructors to use the filepath instead of the data object
-#L8TODO: Search should be mandatory but allow wildcards (for getCases)
-#TODO: Add TEXTxxNUM in data
+#TODO: Search should be mandatory but allow wildcards (for getCases)
     def getInstanceData(self):
         """
         getData() but on an instance
