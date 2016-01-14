@@ -323,12 +323,13 @@ class NASSSearch():
                 
                 #Open the database and get cases
                 fp = os.path.join(prefs["rootPath"], dbInfo["filePath"])
-                caseDB = NASSCaseDB(fp)
-                cases = caseDB.getCases(stubs=True,search=relevantTerms)
                 
                 staticDBInfo = data["staticDBInfo"]["dbs"][dbName]
                 printStr = year + "  \"" + staticDBInfo["prettyName"] + "\" @ \"" + ((fp[:35] + '..') if len(fp) > 35 else fp) + "\""   
                 print(printStr)
+                
+                caseDB = NASSCaseDB(fp)
+                cases = caseDB.getCases(stubs=True,search=relevantTerms)
                 
                 yield cases
     
