@@ -54,27 +54,24 @@ class NASSCaseDB():
             if not "CASENO" in data["columnNames"]:
                 raise RuntimeException(path + " is a SAS database but not a NASSDB database")
                 
-        
-        
-        if internal:
-            #Check for long line columns
-            hasLINENO = "LINENO" in data["columnNames"]
-            TEXTxx = None
-            for col in data["columnNames"]:
-                if re.match("^TEXT\d+$", col):
-                    TEXTxx = col
-                    break
-                    
-            if TEXTxx != None and hasLINENO:
-                #Long line columns exist
-                data["TEXTxx"] = TEXTxx
-                matchObj = re.match("^TEXT(\d+)$", TEXTxx)
-                data["TEXTxxNUM"] = int(matchObj.group(1))
+        #Check for long line columns
+        hasLINENO = "LINENO" in data["columnNames"]
+        TEXTxx = None
+        for col in data["columnNames"]:
+            if re.match("^TEXT\d+$", col):
+                TEXTxx = col
+                break
                 
-                data["columnNames"].remove("LINENO")
-                data["columnNames"].remove(TEXTxx)
-                data["columnNames"].append("LINETXT")
-                
+        if TEXTxx != None and hasLINENO:
+            #Long line columns exist
+            data["TEXTxx"] = TEXTxx
+            matchObj = re.match("^TEXT(\d+)$", TEXTxx)
+            data["TEXTxxNUM"] = int(matchObj.group(1))
+            
+            data["columnNames"].remove("LINENO")
+            data["columnNames"].remove(TEXTxx)
+            data["columnNames"].append("LINETXT")
+        
         #Get the type of case database
         hasVEHNO = "VEHNO" in data["columnNames"]
         hasOCCNO = "OCCNO" in data["columnNames"]
@@ -84,7 +81,13 @@ class NASSCaseDB():
             data["dbCaseType"] = "OCC"
         elif hasVEHNO:
             data["dbCaseType"] = "VEH"
-            
+        
+        #Cleanup if we don't want internal things
+        if not internal:
+            if "TEXTxx" in data:
+                del data["TEXTxx"]
+                del data["TEXTxxNUM"]
+        
         return data
                 
             
