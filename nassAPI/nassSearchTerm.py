@@ -300,28 +300,37 @@ class NASSSearch():
     
     #Perform the search
     def perform(self):
+        for termsToCases in self.performGenerator():
+            self.foundCases = self.foundCases.union(self.resolve(termsToCases))
+    
+    #Performs the search but yields at intervals to allow external control
+    def performResponsive(self):
+        for termsToCases in self.performGenerator():
+            self.foundCases = self.foundCases.union(self.resolve(termsToCases))
+            yield True
+        yield False
+    
+    #Generator for performing a search
+    def performGenerator(self):
         #Go through each year and each DB in that year
         print("Root is at " + prefs["rootPath"])
         for year, yearInfo in data["preprocessDBInfo"].items():
-            termsToCases = {}
             for dbName, dbInfo in yearInfo["dbs"].items():
                 #Relevant to search?
                 relevantTerms = self.search.ofDB(dbName)
-                if len(relevantTerms) == 0:
+                if not relevantTerms: #len() == 0
                     continue #Not a relevant database
                 
                 #Open the database and get cases
                 fp = os.path.join(prefs["rootPath"], dbInfo["filePath"])
-                nassCaseDB = NASSCaseDB(fp)
-                staticDBInfo = data["staticDBInfo"]["dbs"][dbName]
+                caseDB = NASSCaseDB(fp)
+                cases = caseDB.getCases(stubs=True,search=relevantTerms)
                 
+                staticDBInfo = data["staticDBInfo"]["dbs"][dbName]
                 printStr = year + "  \"" + staticDBInfo["prettyName"] + "\" @ \"" + ((fp[:35] + '..') if len(fp) > 35 else fp) + "\""   
                 print(printStr)
-        
-                cases = nassCaseDB.getCases(stubs=True,search=relevantTerms)
-                termsToCases.update(cases)
-        
-            self.foundCases = self.foundCases.union(self.resolve(termsToCases))
+                
+                yield cases
     
     #Take the collected termsToCases (terms from self.search mapped to datasets) and
     #compute the final dataset
