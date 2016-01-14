@@ -3,7 +3,7 @@ import os
 import re
 import subprocess
 
-import .nassGlobal
+from . import nassGlobal
 from .nassGlobal import prefs, data
 from .nassDB import NASSCaseDB
 
@@ -98,8 +98,8 @@ def findYearFiles(year, rootYearPath):
             print("Found DB: " + entryFilePath)
                     
     return paths
-    
-if __name__ == "__main__":
+
+def main():
     #Year information
     years = {}
 
@@ -121,4 +121,7 @@ if __name__ == "__main__":
     #Output everything as JSON
     f = open(prefs["preprocessJSONFile"], "w")
     f.write(json.dumps(years, sort_keys=True, indent=4, separators=(',', ': ')))
+    
+if __name__ == "__main__":
+    main()
     
