@@ -112,7 +112,11 @@ class NASSCaseDB():
             matches = []
 
         with SAS7BDATUtil(self.data["filePath"], skip_header=True) as db:
-            textxxRowCache = dict()
+            textxxRowCache = {
+                "lastIdent" : None,
+                "lastKVs" : None,
+                "lines" : dict()
+            }
             toStubData = None
             for row in db:
                 #Get the stubData for this row
@@ -123,31 +127,28 @@ class NASSCaseDB():
                 if "TEXTxx" in self.data:
                     #Check if the line we're looking for is already in the cache
                     ident = NASSStubData.getKVIdentTuple("", "CASE", kvs)
-                    if ident in textxxRowCache:
-                        cacheObj = textxxRowCache[ident]
-                    else:
-                        cacheObj = textxxRowCache[ident] = {
-                            "lines" : dict(),
-                            "lastLine" : -1,
-                        }
-                    #TODO: Make this more readable
                     
-                    #Update lines
-                    lineNum = int(kvs["LINENO"])
-                    cacheObj["lines"][lineNum] = kvs[self.data["TEXTxx"]]
-                    #Check to see if we found the last line, record if we did
-                    
-                    if len(kvs[self.data["TEXTxx"]]) < self.data["TEXTxxNUM"]:
-                        cacheObj["lastLine"] = int(kvs["LINENO"])
-                        
-                    #Check to see if we have all the lines, make the final kv if so
-                    if cacheObj["lastLine"] == len(cacheObj["lines"].keys()):
+                    #If we started reading from a new ident, box up the old one
+                    if textxxRowCache["lastIdent"] and textxxRowCache["lastIdent"] != ident:
                         #Combine all the lines into LINETXT
-                        del kvs["LINENO"]
-                        del kvs[self.data["TEXTxx"]]
-                        kvs["LINETXT"] = "".join(cacheObj["lines"].values()) #TODO: values might not be sorted!
-                        toStubData = kvs
-                        del textxxRowCache[ident]
+                        del textxxRowCache["lastKVs"]["LINENO"]
+                        del textxxRowCache["lastKVs"][self.data["TEXTxx"]]
+                        textxxRowCache["lastKVs"]["LINETXT"] = " ".join(textxxRowCache["lines"].values()) #TODO: values might not be sorted!
+                        toStubData = textxxRowCache["lastKVs"]
+                        #Back to none
+                        textxxRowCache["lastIdent"] = None
+                        textxxRowCache["lastKVs"] = None
+                    #Same as before, just update
+                    elif textxxRowCache["lastIdent"]:
+                        #Update lines
+                        lineNum = int(kvs["LINENO"])
+                        textxxRowCache["lines"][lineNum] = kvs[self.data["TEXTxx"]]
+                        
+                    #New one (still None)
+                    if not textxxRowCache["lastIdent"]:
+                        textxxRowCache["lastIdent"] = ident
+                        textxxRowCache["lastKVs"] = kvs
+                        
                 #If no TEXTxx, just straight to kvs
                 else:
                     toStubData = kvs
