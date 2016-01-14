@@ -160,13 +160,13 @@ class NASSCaseDB():
                 if toStubData:
                     #Only use stubs keys if stubs
                     if stubs:
-                        toStubData = {k:toStubData[k] for k in prefs["stubKeys"] if k in toStubData}
+                        initStubData = {k:toStubData[k] for k in prefs["stubKeys"] if k in toStubData}
                     #Make the stub data
                     stubData = NASSStubData(self.data["year"], self.data["dbCaseType"], toStubData)
                     #Put in correct location
                     if search:
                         for term in search:
-                            if term.compare(stubData.kvs):
+                            if term.compare(toStubData):
                                 matches[term].append(stubData)
                     else:
                         matches.append(stubData)
