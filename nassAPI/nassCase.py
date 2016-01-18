@@ -49,6 +49,11 @@ class NASSStubData():
     def __setitem__(self, key, val):
         self.kvs[key] = val
     
+    def toJSONHelper(self):
+        tmpDict = self.kvs.copy()
+        tmpDict["CASE_YEAR"] = self.year
+        return tmpDict
+    
     def copyEmpty(self, type):
         """
         Copies this object with only the kvs that identify it
@@ -133,6 +138,11 @@ class NASSCase():
     def __len__(self):
         return len(self.vehs.keys())
     
+    def toJSONHelper(self):
+        obj = self.stubData.toJSONHelper()
+        obj["VEHICLES"] = [v.toJSONHelper() for v in self.vehs]
+        return obj
+    
     def matchesKVsIdent(self, year, kvs):
         return NASSStubData.getKVIdentTuple(year, "CASE", kvs) == self.stubData.getIdentTuple()
     
@@ -176,6 +186,11 @@ class NASSCaseVehicle(NASSCase):
         self.stubData = stubData.copyEmpty("VEH")
         self.feedStubData(stubData)
     
+    def toJSONHelper(self):
+        obj = self.stubData.toJSONHelper()
+        obj["OCCUPANTS"] = [o.toJSONHelper() for o in self.occs]
+        return obj
+    
     def feedStubData(self, stubData):
         """
         Feeds stub data into the vehilce
@@ -202,7 +217,10 @@ class NASSCaseOccupant(NASSCase):
     def __init__(self, stubData):
         self.stubData = stubData.copyEmpty("OCC")
         self.feedStubData(stubData)
-        
+    
+    def toJSONHelper(self):
+        return self.stubData.toJSONHelper()
+    
     def feedStubData(self, stubData):
         """
         Feeds stub data into the occupant
