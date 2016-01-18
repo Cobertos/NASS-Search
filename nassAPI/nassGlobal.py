@@ -105,11 +105,11 @@ def init():
     #Default compare functions
     #TODO: Shouldn't go in API, should be in web application
     def stringIn(found, find):
-        return find in found
+        return str(find) in str(found)
     def equal(found, find):
-        return find == found
+        return str(find) == str(found)
     def startsWith(found, find):
-        return found.startsWith(find)
+        return str(found).startswith(str(find))
     _prefs["supportedCompareFuncs"] = {
         "String Inside" : stringIn,
         "Equal" : equal,

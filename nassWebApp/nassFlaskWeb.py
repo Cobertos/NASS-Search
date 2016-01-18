@@ -1,7 +1,6 @@
 import json
 import os
 import mimetypes
-import random
 import sys
 import codecs
    
@@ -12,7 +11,9 @@ app.debug = True
 sys.path.append(os.path.realpath(".."))
 import nassAPI.nassGlobal as nassGlobal
 import nassAPI.nassSearchTerm as nassSearchTerm
-from nassWorkers import NASSSearchWorker
+from nassWorkers import NASSSearchWorker, NASSSearchWorkerManager
+
+workerManager = NASSSearchWorkerManager()
 
 #NASS redirect
 nassGlobal.updateUserPrefs({
@@ -143,9 +144,7 @@ def presearch():
                 
     
     return json.dumps(alerts)
-
-workers = {}
-    
+ 
 @app.route('/api_search', methods=["POST"])
 def search():
     """
@@ -153,16 +152,13 @@ def search():
     
     Responds to a request to search with the job id of the newly created search
     """
-
+    
+    global workerManager
+    
     #Spawn a new thread to search
     requestData = codecs.decode(request.data, "utf_8")
     searchTerm = jsonToNASSSearch(requestData)
-    worker = NASSSearchWorker(searchTerm)
-    worker.start()
-    
-    #Put it in the array based on jobId
-    jobId = str(random.randint(0,sys.maxsize))
-    workers[jobId] = worker
+    jobId = workerManager.getNewWorker(searchTerm, start=True)
     
     jsonOut = {}
     jsonOut["jobid"] = jobId
@@ -175,20 +171,29 @@ def searchPoll():
     
     Responds to a request to poll for data on a given search
     """
+    
+    global workerManager
 
     requestData = codecs.decode(request.data, "utf_8")
     jsonObj = json.loads(requestData)
     
-    if not (jsonObj["jobid"] in workers):
-        return "JobId does not exist"
+    try:
+        worker = workerManager.getWorker(jsonObj["jobid"])
+    except:
+        abort(500)
     
-    worker = workers[jsonObj["jobid"]]
+    #Check what the client wants to perform
     if "action" in jsonObj:
         action = jsonObj["action"]
         if action == "CANCEL":
             worker.cancel()
-    
-    return worker.getStatus()
+            
+    #Check what we should return
+    if worker.getStatus() == "DONE":
+        ret = (worker.getStatus(), worker.getCases())
+    else:
+        ret = (worker.getStatus(), worker.getCaseCount())
+    return json.dumps(ret)
 
 if __name__ == "__main__":
     app.run()

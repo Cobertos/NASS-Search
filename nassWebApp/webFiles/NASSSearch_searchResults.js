@@ -31,10 +31,13 @@
 			processData : false
 		})
 		.done(function(data, status, jXHR){
-			self.GUIfyElement.children("*[data-guify-name=progress]").children(".statusField").first().html(data);
+			var jsonData = JSON.parse(data);
+			var status = jsonData[0];
+			var caseCount = jsonData[1];
+			self.GUIfyElement.children("*[data-guify-name=progress]").children(".statusField").first().html("STATUS: " + status + "| CASECOUNT: " + caseCount);
 			
-			var firstData = data.split(" ")[0];
-			if(firstData == "DONE" || firstData == "FAILED" || firstData == "CANCELLED")
+			var firstWord = status.split(" ")[0];
+			if(firstWord == "DONE" || firstWord == "FAILED" || firstWord == "CANCELLED")
 				clearInterval(self.pollInterval);
 		});
 	};

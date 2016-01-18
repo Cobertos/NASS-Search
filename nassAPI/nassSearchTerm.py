@@ -307,8 +307,8 @@ class NASSSearch():
     def performResponsive(self):
         for termsToCases in self.performGenerator():
             self.foundCases = self.foundCases.union(self.resolve(termsToCases))
-            yield True
-        yield False
+            yield False
+        yield True
     
     #Generator for performing a search
     def performGenerator(self):
