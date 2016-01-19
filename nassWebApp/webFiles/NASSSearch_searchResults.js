@@ -32,13 +32,35 @@
 		})
 		.done(function(data, status, jXHR){
 			var jsonData = JSON.parse(data);
-			var status = jsonData[0];
-			var caseCount = jsonData[1];
-			self.GUIfyElement.children("*[data-guify-name=progress]").children(".statusField").first().html("STATUS: " + status + "| CASECOUNT: " + caseCount);
 			
+			console.log(jsonData);
+			
+			var status = jsonData[0];
 			var firstWord = status.split(" ")[0];
+			if(firstWord == "DONE")
+			{
+				var cases = jsonData[1];
+				self.GUIfyElement.children("*[data-guify-name=progress]").children(".statusField").first().html("STATUS: " + status);
+				var myTable = self.GUIfyElement.children("*[data-guify-name=results]").children("table").first();
+				var s = "";
+				for(var i=0; i<cases.length; i++)
+				{
+					var currCase = cases[i];
+					var c = currCase[0];
+					var link = currCase[1];
+					s += "<tr><td><a href=\"" + link + "\">" + c["CASE_YEAR"] + " " + c["PSU"] + " " + c["CASENO"] + "</a></td></tr>";
+				}
+				myTable.html(s);
+			}
+			else
+			{
+				var caseCount = jsonData[1];
+				self.GUIfyElement.children("*[data-guify-name=progress]").children(".statusField").first().html("STATUS: " + status + "| CASECOUNT: " + caseCount);
+			}
+			
 			if(firstWord == "DONE" || firstWord == "FAILED" || firstWord == "CANCELLED")
 				clearInterval(self.pollInterval);
+			
 		});
 	};
 	

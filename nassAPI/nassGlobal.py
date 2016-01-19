@@ -139,3 +139,10 @@ def userYN(msg):
             return False
         
         print("Invalid response, please choose y or n")
+
+class NASSJSONEncoder(json.JSONEncoder):
+    def default(self, o, *args, **kwargs):
+        if getattr(o, "toJSONHelper", None) and callable(o.toJSONHelper):
+            return o.toJSONHelper()
+        else:
+            return super().default(o, *args, **kwargs)

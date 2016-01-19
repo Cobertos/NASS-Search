@@ -193,7 +193,7 @@ def searchPoll():
         ret = (worker.getStatus(), worker.getCases())
     else:
         ret = (worker.getStatus(), worker.getCaseCount())
-    return json.dumps(ret)
+    return json.dumps(ret, cls=nassGlobal.NASSJSONEncoder)
 
 if __name__ == "__main__":
     app.run()

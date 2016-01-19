@@ -72,10 +72,10 @@ class NASSSearchWorker(threading.Thread):
                 break
             
         #Export the cases
-        yield "DONE"
+        yield "EXPORTING"
         self.cases = self.search.export("links")
         
-        yield "RETURNING"
+        yield "DONE"
         
     def getStatus(self):
         return self.status
