@@ -232,7 +232,7 @@
 				{
 					if(fullFill)
 					{
-						fillSelect(jEl, fillData.sort());
+						fillSelect(jEl, fillData);
 					}
 					//else - Skip it
 				}
@@ -250,7 +250,7 @@
 					//If fullFill (always fill) or if the current fillKey differs from the one it was filled with, fill it
 					if(fullFill || (isDef(jEl[0].fillKey) && jEl[0].fillKey != fillKey))
 					{
-						fillSelect(jEl, fillData[fillKey].sort());
+						fillSelect(jEl, fillData[fillKey]);
 						jEl[0].fillKey = fillKey;
 					}
 					//else - Skip it
@@ -318,7 +318,7 @@
 	SearchMiscControl.prototype.fillPanel = function()
 	{
 		var toFill = this.jGUIEl.children("select");
-		var yearData = this.supportedData["year"].sort();
+		var yearData = this.supportedData["year"];
 		$.each(toFill, function(idx, el){
 			fillSelect($(el), yearData);
 		});

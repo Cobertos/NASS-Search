@@ -1,4 +1,3 @@
-* Add the line joining in nassDB
 * Add options to both nass and nassPreprocess eventually
 
 nassSearchTerm
@@ -7,9 +6,6 @@ hide more functionality of resolve in the term! (return a control object instead
 USER INTERFACE
 * Pointer-options fix for <IE11
 * User friendly names (partial support on backend for this already with translateObj, just implement it everywhere)
-* Finish the other ajax calls
 * Delete should select next available term
 * Styling on the go button alert box
-
-Extra later features
-* Give a search output portion for long text columns with excerpt of match (so the user can get a better view of what matched for long values), for links export
+* Split up the cases into multiple ajax calls based on when the user wants more

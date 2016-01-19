@@ -21,6 +21,15 @@
 		$.ajax("/api_init", {method : "GET"})
 			.done(function(data, status, jXHR){
 				self.initData = JSON.parse(data);
+				
+				//Sort some of the lists
+				self.initData["dbName"].sort();
+				$.each(self.initData["colName"], function(k,v){
+					v.sort();
+				});
+				self.initData["compareFunc"].sort();
+				self.initData["year"].sort();
+				
 				self.ready();
 			});
 		
