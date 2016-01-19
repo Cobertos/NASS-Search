@@ -4,6 +4,7 @@
 	function SearchResults(nassMain)
 	{
 		this.nassMain = nassMain;
+		this.resultsTable = this.GUIfyChild
 		this.subscribe("GUIfy_onDisplay", this.onDisplay.bind(this));
 	}
 	NASSSearch.SearchResults = SearchResults;
@@ -40,22 +41,19 @@
 			if(firstWord == "DONE")
 			{
 				var cases = jsonData[1];
-				self.GUIfyElement.children("*[data-guify-name=progress]").children(".statusField").first().html("STATUS: " + status);
-				var myTable = self.GUIfyElement.children("*[data-guify-name=results]").children("table").first();
-				var s = "";
+				self.children("progress")[0].updateStatus("STATUS: " + status);
 				for(var i=0; i<cases.length; i++)
 				{
 					var currCase = cases[i];
 					var c = currCase[0];
 					var link = currCase[1];
-					s += "<tr><td><a href=\"" + link + "\">" + c["CASE_YEAR"] + " " + c["PSU"] + " " + c["CASENO"] + "</a></td></tr>";
+					self.children("results")[0].addResult(c, link);
 				}
-				myTable.html(s);
 			}
 			else
 			{
 				var caseCount = jsonData[1];
-				self.GUIfyElement.children("*[data-guify-name=progress]").children(".statusField").first().html("STATUS: " + status + "| CASECOUNT: " + caseCount);
+				self.children("progress")[0].updateStatus("STATUS: " + status + "| CASECOUNT: " + caseCount);
 			}
 			
 			if(firstWord == "DONE" || firstWord == "FAILED" || firstWord == "CANCELLED")
@@ -69,18 +67,49 @@
 	{
 		
 	};
-	NASSSearch.SearchResults_Summary = GUIfyClass(SearchResults_Summary, "summary");
+	SearchResults_Summary = GUIfyClass(SearchResults_Summary, "summary");
 	
 	function SearchResults_Progress()
 	{
-		
+		this.jStatusEl = this.GUIfyElement.children(".statusField").first();
 	};
-	NASSSearch.SearchResults_Progress = GUIfyClass(SearchResults_Progress, "progress");
+	SearchResults_Progress = GUIfyClass(SearchResults_Progress, "progress");
+	SearchResults_Progress.prototype.updateStatus = function(statusStr)
+	{
+		this.jStatusEl.html(statusStr);
+	};
 	
 	function SearchResults_Results()
 	{
-		
+		this.jDisplayTableEl = this.GUIfyElement.children("table").first();
+		//TODO: Add button to get more cases this.moreButton = this.GUIfyElement.children(".
+		this.clearResults();
 	};
-	NASSSearch.SearchResults_Results = GUIfyClass(SearchResults_Results, "results");
+	SearchResults_Results = GUIfyClass(SearchResults_Results, "results");
+	SearchResults_Results.prototype._resultInit = function()
+	{
+		var initRow = "<tr>"
+		+ "<td>YEAR</td>"
+		+ "<td>CASE NUM</td>"
+		+ "<td>PSU</td>"
+		+ "<td>View in case viewer</td>"
+		+ "</tr>";
+		this.jDisplayTableEl.html(initRow);
+	};
+	SearchResults_Results.prototype.addResult = function(resCase, resLink)
+	{
+		var newRow = "<tr>"
+		+ "<td>" + resCase["CASE_YEAR"] + "</td>"
+		+ "<td>" + resCase["CASENO"] + "</td>"
+		+ "<td>" + resCase["PSU"] + "</td>"
+		+ "<td><a href=\"" + resLink + "\">View in NASS case viewer</a></td>"
+		+ "</tr>";
+		this.jDisplayTableEl.append(newRow);
+	};
+	SearchResults_Results.prototype.clearResults = function()
+	{
+		this.jDisplayTableEl.empty();
+		this._resultInit();
+	};
 	
 })(window.NASSSearch = window.NASSSearch || {});

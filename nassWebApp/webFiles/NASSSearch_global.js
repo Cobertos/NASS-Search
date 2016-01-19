@@ -201,10 +201,13 @@ function GUIfyClass(oldCls, elClsName, defaultArgs)
 	$.extend(newCls.prototype, GUIfy.objProto);
 	$.extend(newCls.prototype, oldCls.prototype);
 	
-	GUIfy.clsCallList[elClsName] = {
-		"cls" : newCls,
-		"args" : defaultArgs
-	};
+	if(isDef(elClsName))
+	{
+		GUIfy.clsCallList[elClsName] = {
+			"cls" : newCls,
+			"args" : defaultArgs
+		};
+	}
 	
 	return newCls;
 }
