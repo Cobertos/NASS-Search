@@ -90,7 +90,7 @@
 	{
 		var initRow = "<tr>"
 		+ "<td>YEAR</td>"
-		+ "<td>CASE NUM</td>"
+		+ "<td>CASE #</td>"
 		+ "<td>PSU</td>"
 		+ "<td>View in case viewer</td>"
 		+ "</tr>";
@@ -98,11 +98,15 @@
 	};
 	SearchResults_Results.prototype.addResult = function(resCase, resLink)
 	{
+		var resLinkAbv = resLink;
+		if(resLink.length > 20)
+			resLinkAbv = "..." + resLink.substr(resLink.length-20,20);
+		
 		var newRow = "<tr>"
 		+ "<td>" + resCase["CASE_YEAR"] + "</td>"
 		+ "<td>" + resCase["CASENO"] + "</td>"
 		+ "<td>" + resCase["PSU"] + "</td>"
-		+ "<td><a href=\"" + resLink + "\">View in NASS case viewer</a></td>"
+		+ "<td><a href=\"" + resLink + "\">" + resLinkAbv + "</a></td>"
 		+ "</tr>";
 		this.jDisplayTableEl.append(newRow);
 	};

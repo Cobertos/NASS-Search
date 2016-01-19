@@ -204,12 +204,16 @@ main
 	background-color:#dea6a6;
 }
 
-table td
+[data-guify-name=results] table
+{
+	width: 100%;
+}
+[data-guify-name=results] table td
 {
 	padding-left:10px;
 	padding-right:10px;
 }
-table tr:first-child
+[data-guify-name=results] table tr:first-child
 {
 	background-color:#FFFFFF;
 }
