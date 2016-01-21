@@ -90,6 +90,26 @@ class NASSStubData():
             raise ValueError("Kvs passed is not compatible with this data stub")
             
         self.kvs.update(kvs)
+        
+    def prettyPrint(self, fixedLen=None):
+        def splitString(inStr):
+            retStr = ""
+            while len(inStr) > fixedLen:
+                retStr += inStr[:fixedLen] + "\n"
+                inStr = inStr[fixedLen:]
+            retStr += inStr
+            return retStr
+    
+        ret = ""
+        substr = ""
+        for k, v in self.kvs.items():
+            newstr = str(k) + ":" + str(v) + ", "
+            if len(substr) + len(newstr) > fixedLen:
+                ret += substr + "\n"
+                substr = splitString(newstr)
+            else:
+                ret += splitString(newstr)
+        return ret
          
 class NASSCase():
     """
@@ -161,18 +181,14 @@ class NASSCase():
             else:
                 self.vehs[idTup].feedStubData(stubData)
     
-    #TODO: Redo pretty print
-    def prettyPrint(self, fixedLen=None):
+    def prettyPrint(self, fixedLen=None):    
         ret = "CASE: year:\"" + str(self["CASE_YEAR"]) + "\" psu:\"" + str(self["PSU"]) + "\" caseno:\"" + str(self["CASENO"]) + "\"\n"
-        """for db, kvs in self.dbs.items():
-            substr = "[" + str(db) + "| "
-            for k, v in kvs.items():
-                substr += str(k) + ":" + str(v) + ", "
-                if len(substr) > 200:
-                    s += substr + "\n"
-                    substr = ""
-            substr += "]\n"
-        ret += substr"""
+        ret += self.stubData.prettyPrint(fixedLen=fixedLen)
+        if self.vehs.keys(): #has a key
+            ret += "\nVEHICLES\n"
+            for k, veh in self.vehs:
+                ret += "[" + k + "]" + veh.prettyPrint(fixedLen=fixedLen) + "\n"
+        
         return ret
         
 class NASSCaseVehicle(NASSCase):
@@ -206,8 +222,13 @@ class NASSCaseVehicle(NASSCase):
             else:
                 self.occs[idTup].feedStubData(stubData)
     
-    def prettyPrint(self):
-        raise NotImplementedError("Nope")
+    def prettyPrint(self, fixedLen=None):
+        ret = self.stubData.prettyPrint(fixedLen=fixedLen) + "\n"
+        if self.occs.keys(): #has a key
+            ret += "\nOCCUPANTS\n"
+            for k, occ in self.occs:
+                ret += "[" + k + "]" + occ.prettyPrint(fixedLen=fixedLen) + "\n"
+        return ret
         
 
 class NASSCaseOccupant(NASSCase):
@@ -231,5 +252,5 @@ class NASSCaseOccupant(NASSCase):
         else:
             raise ValueError("Not a valid stubData for an occupant")
     
-    def prettyPrint(self):
-        raise NotImplementedError("Nope")
+    def prettyPrint(self, fixedLen=None):
+        return self.stubData.prettyPrint(fixedLen=fixedLen)

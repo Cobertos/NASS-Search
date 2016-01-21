@@ -14,9 +14,12 @@ from nassAPI.nassCase import NASSCase
 
 def areEq(foundValue,findValue):
     return foundValue == findValue
+def strIn(foundValue,findValue):
+    return findValue in foundValue
 
 search = NASSSearch(NASSSearchTerm.fromStrList(
-("acc_desc.sas7bdat","CASENO",1, areEq)
+("acc_desc.sas7bdat","LINETXT","dog", strIn)
+
 ))
 
 
@@ -30,6 +33,6 @@ if __name__ == "__main__":
     print("Outputting matches")
     f = open("output.txt", "w")
     for case, link in cases:
-        f.write("\n------------------------\n" + case.prettyPrint(fixedLen=200) + "\n" + link)
+        f.write("\n------------------------\n" + case.prettyPrint(fixedLen=100) + "\n" + link)
 
     print("Success!")
