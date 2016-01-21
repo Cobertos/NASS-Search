@@ -131,26 +131,32 @@ class NASSCaseDB():
                     #Check if the line we're looking for is already in the cache
                     ident = NASSStubData.getKVIdentTuple("", "CASE", kvs)
                     
-                    #If we started reading from a new ident, box up the old one
+                    #If we started reading from a new ident, box up the old one, clear cache
                     if textxxRowCache["lastIdent"] and textxxRowCache["lastIdent"] != ident:
                         #Combine all the lines into LINETXT
                         del textxxRowCache["lastKVs"]["LINENO"]
                         del textxxRowCache["lastKVs"][self.data["TEXTxx"]]
-                        textxxRowCache["lastKVs"]["LINETXT"] = " ".join(textxxRowCache["lines"].values()) #TODO: values might not be sorted!
+                        
+                        #Convert lines' keys to ints and sort by key
+                        lineTuples = list(textxxRowCache["lines"].items())      #Get line tuples
+                        lineTuples.sort(key=lambda itm: itm[0])                 #Sort by the key
+                        lines = [t[1] for t in lineTuples]                      #Get just the lines
+                        textxxRowCache["lastKVs"]["LINETXT"] = " ".join(lines)  #Join them all together
+
                         toStubData = textxxRowCache["lastKVs"]
                         #Back to none
                         textxxRowCache["lastIdent"] = None
                         textxxRowCache["lastKVs"] = None
-                    #Same as before, just update
-                    elif textxxRowCache["lastIdent"]:
-                        #Update lines
-                        lineNum = int(kvs["LINENO"])
-                        textxxRowCache["lines"][lineNum] = kvs[self.data["TEXTxx"]]
+                        textxxRowCache["lines"] = dict()
                         
-                    #New one (still None)
+                    #New one (also captures current line if last one boxed up)
                     if not textxxRowCache["lastIdent"]:
                         textxxRowCache["lastIdent"] = ident
                         textxxRowCache["lastKVs"] = kvs
+
+                    #Update lines
+                    lineNum = int(kvs["LINENO"])
+                    textxxRowCache["lines"][lineNum] = kvs[self.data["TEXTxx"]]
                         
                 #If no TEXTxx, just straight to kvs
                 else:

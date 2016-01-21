@@ -33,6 +33,6 @@ if __name__ == "__main__":
     print("Outputting matches")
     f = open("output.txt", "w")
     for case, link in cases:
-        f.write("\n------------------------\n" + case.prettyPrint(fixedLen=100) + "\n" + link)
+        f.write("\n" + ("="*110) + "\n" + case.prettyPrint(fixedLen=100) + "\n" + link)
 
     print("Success!")
