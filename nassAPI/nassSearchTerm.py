@@ -28,7 +28,7 @@ class NASSSearchTerm():
         return self.toStrList().__str__()
     
     def __eq__(self, other):
-        return self.__hash__() == other.__hash__()
+        return isinstance(other, self.__class__) and self.__hash__() == other.__hash__()
         
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -118,9 +118,9 @@ class NASSSearchTerm():
                     raise ValueError("Term compared to kv that didn't contain column described in search (wrong DB row compared?)")
                 value = kvs[term.terms["colName"]]
                 return term.terms["compareFunc"](value, term.terms["searchValue"])
-            #List terms need more work
-            elif isinstance(term.terms, list):
-                return term.resolve(mapFunc, joinFunc)
+            #Tuple terms will never match
+            elif isinstance(term.terms, tuple):
+                raise ValueError("No match")
         
         #Func for joining mapped values based on a join
         def joinFunc(firstTerm, join, secondTerm):
@@ -136,18 +136,27 @@ class NASSSearchTerm():
     
     #Resolve this list to a single term based on a mapping of terms to values (mapFunc) and a description on how to join them (joinFunc)
     #Will not modify the object in any way and uses separate lists to keep track of the entire term (kind of how toStrList works) in local scope
-    #This function is indirectly recursive in that the mapFunc usually calls resolve again to work on child terms of a large term
+    #If mapFunc cannot find a match, an exception should be raised to denote a problem with resolving, returning None will map to None!
     def resolve(self, mapFunc, joinFunc):
         if isinstance(self.terms, dict):
-            return mapFunc(self)
+            try:
+                return mapFunc(self)
+            except Exception as e:
+                raise RuntimeError("No match found for map function") from e
         elif isinstance(self.terms, tuple):
+            #Maybe this tuple term maps directly to a value
+            try:
+                return mapFunc(self)
+            except Exception: #TODO: Make custom exception
+                pass #Nope, continue on as normal, trying to resolve all sub terms
+                
             #1)Replace each term with resolved term
             resolvedList = []
             for term in self.terms:
                 if isinstance(term, NASSSearchJoin):
                     resolvedList.append(term)
                 else:
-                    resolvedList.append(mapFunc(term))
+                    resolvedList.append(term.resolve(mapFunc, joinFunc)) #Resolve any sub term
                 
             #2)Perform the operations on the terms described by the logical joins
             #We made a list of [resolved, joiner, resolved, joiner, resolved ...]
@@ -174,7 +183,15 @@ class NASSSearchTerm():
                             #firstTerm is the previous term in the list
                             #JOIN is the lastJoin recorded (and not appended into the list)
                             #secondTerm is this currently held term
-                            joinedTerm = joinFunc(newResolvedList.pop(), lastJoin, resolvedTerm)
+                            thisTerm = newResolvedList.pop()
+                            try:
+                                joinedTerm = joinFunc(thisTerm, lastJoin, resolvedTerm)
+                            except Exception as e:
+                                #Warn user that they may be doing bad things
+                                if thisTerm == None or resolveTerm == None:
+                                    raise RuntimeError("join with None failed. (Did mapFunc fail to raise an exception on not matching?)") from e
+                                else:
+                                    raise
                             newResolvedList.append(joinedTerm) 
                             lastJoin = None
                         #Otherwise just append
@@ -183,7 +200,7 @@ class NASSSearchTerm():
                 
                 #At the end of an operator, set the new list to be the one resolved now
                 resolvedList = newResolvedList
-                
+            
             return resolvedList[0]
     
     #Returns all the dicts from the entire NASSSearch term tree in one list
@@ -234,7 +251,7 @@ class NASSSearchTerm():
         elif isinstance(jsonObj["terms"], list):
             arrObj = []
             for term in jsonObj["terms"]:
-                arrObj.append(cls.fromJSON(term))
+                arrObj.append(cls.fromJSON(term, translateObj=translateObj))
             
             return NASSSearchTerm(tuple(arrObj), inverse=jsonObj["inverse"])
     
@@ -246,12 +263,16 @@ class NASSSearchTerm():
     #JoinerString is a string representation of NASSSearchJoin
     @classmethod
     def fromStrList(cls, stringTerms, translateObj=None):
+        if translateObj != None:
+            raise NotImplementedError("Translate obj not implemented yet")
+        
+        #Take care of first item in tuple or list
         inverse = False
         if stringTerms[0] == "NOT":
             inverse = True
             stringTerms = stringTerms[1:]
         
-        #Single tuple term become dict terms
+        #4 or 5 tuple ==> Dict term
         if isinstance(stringTerms, tuple):
             dictTerm = {
                 "dbName" : stringTerms[0],
@@ -260,12 +281,14 @@ class NASSSearchTerm():
                 "compareFunc" : stringTerms[3]
             }
             return NASSSearchTerm(dictTerm, inverse=inverse)
-        #Lists of multiple terms become tuple terms
+        #List ==> List term
         elif isinstance(stringTerms, list):
             terms = []
             for term in stringTerms:
+                #String ==> Join
                 if isinstance(term, str):
                     terms.append(NASSSearchJoin[term])
+                #Tuple or list ==> Recurse
                 else:
                     terms.append(cls.fromStrList(term))
             return NASSSearchTerm(tuple(terms), inverse=inverse)
@@ -300,14 +323,22 @@ class NASSSearch():
     
     #Perform the search
     def perform(self):
-        for termsToCases in self.performGenerator():
-            self.foundCases = self.foundCases.union(self.resolve(termsToCases))
+        for complete in self.performResponsive():
+            if complete:
+                break
     
     #Performs the search but yields at intervals to allow external control
     def performResponsive(self):
+        allTermsToCases = dict()
         for termsToCases in self.performGenerator():
-            self.foundCases = self.foundCases.union(self.resolve(termsToCases))
+            for term, cases in termsToCases.items():
+                if term in allTermsToCases:
+                    allTermsToCases[term].extend(cases)
+                else:
+                    allTermsToCases[term] = cases
             yield False
+        
+        self.foundCases = self.foundCases.union(self.resolve(allTermsToCases))
         yield True
     
     #Generator for performing a search
@@ -329,9 +360,13 @@ class NASSSearch():
                 print(printStr)
                 
                 caseDB = NASSCaseDB(fp)
-                cases = caseDB.getCases(stubs=True,search=relevantTerms)
+                termsToCases = caseDB.getCases(stubs=True,search=relevantTerms)
+                caseCount = 0
+                for term, cases in termsToCases.items():
+                    caseCount += len(cases)
+                print("  -Matching case count: " + str(caseCount))
                 
-                yield cases
+                yield termsToCases
     
     #Take the collected termsToCases (terms from self.search mapped to datasets) and
     #compute the final dataset
@@ -339,14 +374,15 @@ class NASSSearch():
         #Func for mapping of NASSSearchTerms to some other value
         def mapFunc(term):
             if not term in termsToCases:
+                #No match for this term
                 if isinstance(term.terms, dict):
                     #Woah, that's not good, we found a singular term that didn't match.
                     #It has no more children so it's not like it was a non-distinct term.
                     #We must be missing some data in the search.
-                    raise RuntimeError("Term with no matching data in NASSSearch. Missed a DB query?\nOffending term:" + str(term))
+                    raise RuntimeError("No match for term. Missed a DB query?\nOffending term:" + str(term))
                 else:
                     #A term that wasn't found just may be non-distinct
-                    return term.resolve(mapFunc, joinFunc)
+                    raise RuntimeError("No match for term.") #Let resolve recurse into the sub terms
             else:
                 #The actual resolution
                 return termsToCases[term]

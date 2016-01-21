@@ -38,7 +38,7 @@ class NASSStubData():
         return self.getIdentTuple().__hash__()
         
     def __eq__(self, other):
-        return self.__hash__() == other.__hash__()
+        return isinstance(other, self.__class__) and self.__hash__() == other.__hash__()
     
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -111,7 +111,7 @@ class NASSCase():
         return self.stubData.__hash__()
     
     def __eq__(self, other):
-        return self.__hash__() == other.__hash__()
+        return isinstance(other, self.__class__) and self.__hash__() == other.__hash__()
     
     def __ne__(self, other):
         return not self.__eq__(other)

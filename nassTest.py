@@ -103,8 +103,9 @@ class TestCase_NASSSearchTerm(unittest.TestCase):
                     return True
                 elif obj == nts[1]:
                     return False
-            elif isinstance(obj.terms, tuple): #Resolve tuple terms by recursion, like most mapFuncs
-                return obj.resolve(mapFunc, joinFunc)
+                elif obj == specialnt: #Term which contains a tuple of items
+                    return False
+            raise RuntimeError("No match in mapFunc")
         def joinFunc(firstTerm, join, secondTerm):
             if join == NASSSearchJoin.AND:
                 return firstTerm and secondTerm
@@ -112,20 +113,39 @@ class TestCase_NASSSearchTerm(unittest.TestCase):
                 return firstTerm or secondTerm
                 
         #Simple testing strList function, calls resolve
-        def t(strList):
+        def t(strList, m=mapFunc, j=joinFunc):
             term = NASSSearchTerm.fromStrList(strList)
-            return term.resolve(mapFunc, joinFunc)
+            return term.resolve(m, j)
         
         #ts[0] becomes True, ts[1] becomes False
         #Simple test, no recursion
+        #                    TRUE      OR/AND    FALSE
         self.assertEqual(t([self.ts[0], "OR", self.ts[1]]), True)
         self.assertEqual(t([self.ts[0], "AND", self.ts[1]]), False)
         
         #Will test the operator precendence
+        #                    TRUE        OR      FALSE     AND      FALSE
         self.assertEqual(t([self.ts[0], "OR", self.ts[0], "AND", self.ts[1]]), True)
         
-        #Test tuple terms, and operator precedence
+        #Test tuple terms (recursing into, not replacing), and operator precedence
+        #                    TRUE        OR      FALSE     AND      FALSE      AND       TRUE
         self.assertEqual(t([self.ts[0], "OR", self.ts[0], "AND", [self.ts[1], "AND", self.ts[0]]]), True)
+        
+        #Test mapping whole tuple terms
+        specialnt = NASSSearchTerm.fromStrList([self.ts[0], "AND", self.ts[2]])
+        def mapFunc2(obj):
+            if isinstance(obj.terms, dict):
+                if obj == nts[0]:
+                    return True
+                elif obj == nts[1]:
+                    return False
+            elif isinstance(obj.terms, tuple): #Resolve tuple terms by recursion, like most mapFuncs
+                if obj == specialnt: #Term which contains a tuple of items
+                    return False
+            raise RuntimeError("No match in mapFunc: \n" + str(obj))
+        #                    TRUE        OR   [            FALSE             ]
+        self.assertEqual(t([self.ts[0], "OR", [self.ts[0], "AND", self.ts[2]]], m=mapFunc2), True)
+        
         
     def test_CaseCompare(self):
         #Just db1
@@ -161,6 +181,13 @@ class TestCase_NASSSearchTerm(unittest.TestCase):
         
     def test_CaseFromJSON(self):
         #Take JSON and create a term from it
+        translateObj = {
+            "dbName" : {"db_1":"DATABASE_1"}, #Only translate db_1 and col_1
+            "colName" : {"col_1":"COLUMN_1"},
+            "searchValue" : None,
+            "compareFunc" : None
+        }
+        
         
         #Simple (one term)
         myJson = {
@@ -174,6 +201,9 @@ class TestCase_NASSSearchTerm(unittest.TestCase):
         }
         myStrList = ("db_1", "col_1", "val", "something")
         self.assertEqual(NASSSearchTerm.fromStrList(myStrList), NASSSearchTerm.fromJSON(myJson))
+        #Same with translate obj
+        myStrList = ("DATABASE_1", "COLUMN_1", "val", "something")
+        self.assertEqual(NASSSearchTerm.fromStrList(myStrList), NASSSearchTerm.fromJSON(myJson, translateObj))
         
         #Complex (multiple terms)
         myJson = { "terms" : 
@@ -199,7 +229,31 @@ class TestCase_NASSSearchTerm(unittest.TestCase):
         "inverse" : False}
         myStrList = [("db_1", "col_1", "val", "something"), "AND", ("db_2", "col_1", "val", "something")]
         self.assertEqual(NASSSearchTerm.fromStrList(myStrList), NASSSearchTerm.fromJSON(myJson))
+        #Same with translate obj
+        myStrList = [("DATABASE_1", "COLUMN_1", "val", "something"), "AND", ("db_2", "COLUMN_1", "val", "something")]
+        self.assertEqual(NASSSearchTerm.fromStrList(myStrList), NASSSearchTerm.fromJSON(myJson, translateObj))
         
+class TestCase_NASSSearch(unittest.TestCase):
+    def test_search(self):
+        def s(strList):
+            term = NASSSearchTerm.fromStrList(strList)
+            search = NASSSearch(term)
+            search.perform()
+            return search.export("links")
+    
+        def areEq(foundValue,findValue):
+            return foundValue == findValue
+        def strIn(foundValue,findValue):
+            return findValue in foundValue
+        strLists = [
+            ("acc_desc.sas7bdat","CASENO",1, areEq),
+            
+            ("acc_desc.sas7bdat","LINETXT","dog", strIn),
+            
+            [("acc_desc.sas7bdat","LINETXT","dog", strIn), "AND", ("acc_desc.sas7bdat","LINETXT","slow", strIn)]
+        ]
+        for sl in strLists:
+            s(sl)
         
         
         

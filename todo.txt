@@ -1,7 +1,5 @@
 * Add options to both nass and nassPreprocess eventually
 
-nassSearchTerm
-hide more functionality of resolve in the term! (return a control object instead of calling the function itself, also pass the type of term with the mapFunc)
 
 USER INTERFACE
 * Pointer-options fix for <IE11
