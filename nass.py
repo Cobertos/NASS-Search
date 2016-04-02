@@ -17,15 +17,15 @@ def areEq(foundValue,findValue):
 def strIn(foundValue,findValue):
     return findValue in foundValue
 
-search = NASSSearch(NASSSearchTerm.fromStrList(
-("acc_desc.sas7bdat","LINETXT","dog", strIn)
-
-))
+search = NASSSearch(NASSSearchTerm.fromStrList([
+("acc_desc.sas7bdat","LINETXT","dog", strIn), "OR",
+("acc_desc.sas7bdat","LINETXT","pet", strIn)
+]))
 
 
 
 if __name__ == "__main__":
-    print("NASS Search Tool (c) Peter Fornari 2015\nMilestone 4: Searching and exporting to links format\n")
+    print("NASS Search Tool (c) Peter Fornari 2015-2016\n")
     
     search.perform()
     cases = search.export("links")

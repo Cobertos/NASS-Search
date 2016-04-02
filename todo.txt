@@ -1,9 +1,9 @@
 * Add options to both nass and nassPreprocess eventually
 
-
 USER INTERFACE
 * Pointer-options fix for <IE11
 * User friendly names (partial support on backend for this already with translateObj, just implement it everywhere)
 * Delete should select next available term
+* Copy term feature
 * Styling on the go button alert box
 * Split up the cases into multiple ajax calls based on when the user wants more
