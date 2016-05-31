@@ -1,4 +1,4 @@
-* Add options to both nass and nassPreprocess eventually
+* Add OpenNASS.bat that activates the venv and then calls OpenNASS.py with setup and run
 
 USER INTERFACE
 * Pointer-options fix for <IE11
