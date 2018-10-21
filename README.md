@@ -1,8 +1,8 @@
-#NASS Search
+# NASS Search
 
 A tool to search NHTSA's NASS database as well as export the data
 
-###SETUP:
+### SETUP:
 
 1. Open a command window and run `pip install -r requirements.txt`
  1. To use pip, Python must be installed and the Python directory should be on the PATH variable.
@@ -14,10 +14,10 @@ A tool to search NHTSA's NASS database as well as export the data
  1. This will create the preprocessed index of all the databases
  2. Hit y to extract all self-extracting archives if you trust the source of your database files.
 
-###RUN THE GUI
+### RUN THE GUI
 
 1. Run `python OpenNASS.py run`
 
-###CREATE A PROGRAM:
+### CREATE A PROGRAM:
 
 1. See nass.py for details
